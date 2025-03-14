@@ -1,0 +1,5 @@
+LIB02
+{{#each charge_data }}
+{{right_pad patron.externalSystemId 11 ' '}}{{left_pad (format_money amount) 9 '0'}}{{left_pad owner_data.ChargeAccount 12 '0'}}{{left_pad (format_date 'NOW' '%m%d%y') 6 '0'}}SFS{{right_pad '' 4 ' '}}{{right_pad owner_data.ChargeDescription 30 ' '}}
+
+{{/each}}

@@ -1,0 +1,5 @@
+message, created, patronBarcode, patronName, userName, amount, itemType, fineType, account, accountDesc, itemBarcode, title, callNumber 
+{{#each charge_data }}
+Fine Processed, {{format_date metadata.createdDate '%m/%d/%Y %-I:%M %p'}}, {{patron.barcode}}, {{patron.personal.firstName}} {{patron.personal.lastName}}, {{patron.username}}, {{remaining}}, {{material.name}}, {{feeFineType}}, {{owner_data.ChargeAccount}}, {{owner_data.ChargeDescription}}, {{barcode}}, {{cleanTitle}}, {{callNumber}}
+
+{{/each}}
