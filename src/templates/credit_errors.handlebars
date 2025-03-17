@@ -1,0 +1,6 @@
+
+message, created, patronBarcode, patronName, userName, amount, itemType, fineType, account, accountDesc, itemBarcode, title, callNumber 
+{{#each error}}
+{{errorCode}}, {{refundDate}}, {{patron.barcode}}, {{patron.personal.firstName}} {{patron.personal.lastName}}, {{patron.username}}, {{amount}}, {{material.name}}, {{feeFineType}}, {{owner_data.ChargeAccount}}, {{owner_data.ChargeDescription}}, {{barcode}}, {{cleanTitle}}, {{callNumber}}
+
+{{/each}}

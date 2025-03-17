@@ -37,12 +37,13 @@ class ExportData:
                 raise ValueError("Invalid template data")
             processed_data = compiled_template(working_data, helpers=helpers)
 
+            file_name = settings['file_name']
             if settings['file_append_date']:
-                date_string = f'_{date.today().strftime('%Y%m%d')}'
-            else:
-                date_string = ''
-            output_file = os.path.join(self.__script_dir, 'temp', f"{settings['file_name']}{date_string}.{settings['file_extension']}")
-            with open(output_file, 'w') as csv_file:
-                csv_file.write(processed_data) 
+                date_string = f'_{date.today().strftime(settings['date_format'])}'
+                file_name = file_name.replace('{date}', date_string)
+
+            output_file = os.path.join(self.__script_dir, 'temp', file_name)
+            with open(output_file, 'w') as file:
+                file.write(processed_data) 
         
             i += 1

@@ -1,6 +1,6 @@
 
 message, created, patronBarcode, patronName, userName, amount, itemType, fineType, account, accountDesc, itemBarcode, title, callNumber 
-{{#each error_data}}
-{{errorCode}}, {{metadata.createdDate}}, {{patron.barcode}}, {{patron.personal.firstName}} {{patron.personal.lastName}}, {{patron.username}}, {{remaining}}, {{material.name}}, {{feeFineType}}, {{owner_data.ChargeAccount}}, {{owner_data.ChargeDescription}}, {{barcode}}, {{cleanTitle}}, {{callNumber}}
+{{#each error}}
+{{errorCode}}, {{metadata.createdDate}}, {{patron.barcode}}, {{patron.personal.firstName}} {{patron.personal.lastName}}, {{patron.username}}, {{amount}}, {{material.name}}, {{feeFineType}}, {{owner_data.ChargeAccount}}, {{owner_data.ChargeDescription}}, {{barcode}}, {{cleanTitle}}, {{callNumber}}
 
 {{/each}}

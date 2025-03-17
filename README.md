@@ -54,6 +54,7 @@ Each filter line must have a unique and consecutive numbers. The filters will be
 
 ## filter_value 
 - The value to compare to the field. 
+- To use a environmental variable use the following format: `ENV|<<ENVIRONMENTAL_VARIABLE_NAME>>` for example `ENV|TRANS_ACCOUNT_NAME`. This will try to match the value in the `TRANS_ACCOUNT_NAME` environmental variable to the field value.
 
 # Reformatting
 

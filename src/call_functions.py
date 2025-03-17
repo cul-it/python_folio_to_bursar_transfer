@@ -43,10 +43,24 @@ class CallFunctions:
 
         cookies = self.__login()
         self.__auth_cookie = {'folioAccessToken': cookies['folioAccessToken']}
+        self.__renew_cookie = {'folioAccessToken': cookies['folioAccessToken']}
+
+    def __renew_token(self):
+        self.__auth_cookie = self.__login()
 
     def get_request(self, url_part):
         url = f'{self.__baseurl}{url_part}'
         print(url)
         r = requests.get(url, cookies=self.__auth_cookie)
+        data = r.json()
+        return data
+
+    def post_request(self, url_part, body):
+        url = f'{self.__baseurl}{url_part}'
+        print(url)
+        print(body)
+        r = requests.post(url, json=body, cookies=self.__auth_cookie)
+        print(r.status_code)
+        print(r.json())
         data = r.json()
         return data
