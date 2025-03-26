@@ -24,7 +24,7 @@ class DataProcessor:
         if fines:
             # If load is not False then a JSON file is loaded and processed as the filter.
             if settings['load'] != False:
-                path = os.path.join(self.__script_dir, 'dataSets', settings['load'])
+                path = os.path.join(self.__script_dir, 'dataSets', f"{settings['load']}.json")
                 if path:  # Check if the file exists
                     with open(path, 'r') as f:
                         test_data = json.load(f)
@@ -91,15 +91,16 @@ class DataProcessor:
             # Apply the replacement
             final_old_key = old_keys[-1]
             final_new_key = new_keys[-1]
-            match settings['type'].upper():
-                case 'REPLACE':
-                    new_dict[final_new_key] = current_dict[final_old_key].replace(search_for, replace_with)
-                case 'LEFT_STRIP':
-                    new_dict[final_new_key] = current_dict[final_old_key].lstrip(search_for)
-                case 'RIGHT_STRIP':
-                    new_dict[final_new_key] = current_dict[final_old_key].rstrip(search_for)
-                case 'MOVE':
-                    new_dict[final_new_key] = current_dict[final_old_key]
+            if final_old_key in current_dict:
+                match settings['type'].upper():
+                    case 'REPLACE':
+                        new_dict[final_new_key] = current_dict[final_old_key].replace(search_for, replace_with)
+                    case 'LEFT_STRIP':
+                        new_dict[final_new_key] = current_dict[final_old_key].lstrip(search_for)
+                    case 'RIGHT_STRIP':
+                        new_dict[final_new_key] = current_dict[final_old_key].rstrip(search_for)
+                    case 'MOVE':
+                        new_dict[final_new_key] = current_dict[final_old_key]
 
         return fines
 
@@ -123,7 +124,7 @@ class DataProcessor:
                 final_new_key = new_keys[-1]
                 new_dict[final_new_key] = f'{current_dict_1[final_old_key_1]}{settings["field_deliminator"]}{current_dict_2[final_old_key_2]}'
         elif settings['merge_type'].upper() == "FILE":
-            path = os.path.join(self.__script_dir, 'dataSets', settings['load'])
+            path = os.path.join(self.__script_dir, 'dataSets', f"{settings['load']}.json")
             if path:  # Check if the file exists
                 with open(path, 'r') as f:
                     merge_data = json.load(f)
@@ -173,8 +174,9 @@ class DataProcessor:
 
     def __filter_error(self, data, settings):
         self.__filter_data[f'failed{settings["name"]}'] += 1
-        data['errorCode'] = settings['error_message']
-        self.__error_data.append(data)
+        if settings["log_error"] == True:
+            data['errorCode'] = settings['error_message']
+            self.__error_data.append(data)
         return data
 
     def __filter_get_field_value(self, data, settings):

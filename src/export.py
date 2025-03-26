@@ -33,6 +33,11 @@ class ExportData:
                 working_data = charge_data
             elif settings['template_data'].upper() == 'REFUND_DATA':
                 working_data = refund_data
+            elif settings['template_data'].upper() == 'BOTH':
+                working_data = { 
+                    "charge": charge_data,
+                    "credit": refund_data
+                }
             else:
                 raise ValueError("Invalid template data")
             processed_data = compiled_template(working_data, helpers=helpers)

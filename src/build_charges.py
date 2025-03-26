@@ -75,7 +75,7 @@ class BuildCharges:
         self.__filter_data.update( self.__data_processor.gen_data_summary(error_data, 'errors') )
 
         formatted_data = {
-            "data": credits,
+            "data": fines,
             "error": error_data,
             "summary": self.__filter_data 
         }
