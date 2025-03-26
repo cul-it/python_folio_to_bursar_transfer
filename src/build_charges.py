@@ -4,7 +4,7 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 from datetime import date, timedelta
-from src.data_processor import DataProcessor  # Import the new class
+from src.shared.data_processor import DataProcessor  # Import the new class
 
 class BuildCharges:
 

@@ -4,7 +4,7 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 from datetime import date, timedelta
-from src.handlebars_helpers import left_pad, right_pad, format_date, format_money
+from src.shared.handlebars_helpers import left_pad, right_pad, format_date, format_money
 from pybars import Compiler
 
 
