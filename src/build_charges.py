@@ -8,9 +8,9 @@ from src.shared.data_processor import DataProcessor  # Import the new class
 
 class BuildCharges:
 
-    def __init__(self, baseFunctions):
+    def __init__(self, connector):
         self.__script_dir = os.path.dirname(__file__)
-        self.__base_functions = baseFunctions
+        self.__connector = connector
         self.__charge_days_outstanding = os.getenv('CHARGES_DAYS_OUTSTANDING') if os.getenv('CHARGES_DAYS_OUTSTANDING') else 0
         self.__max_fine_age = os.getenv('CHARGES_MAX_AGE') if os.getenv('CHARGES_MAX_AGE') else 365
 
@@ -24,7 +24,7 @@ class BuildCharges:
             "rawRecordCount":0,
          }
 
-        self.__data_processor = DataProcessor(self.__script_dir, self.__base_functions)  # Initialize DataProcessor
+        self.__data_processor = DataProcessor(self.__script_dir, self.__connector)  # Initialize DataProcessor
 
     def get_charges(self):
         error_data = []
@@ -117,7 +117,7 @@ class BuildCharges:
         max_age = cur_date - timedelta(days=int(self.__max_fine_age))
         limit = os.getenv('MAX_FINES_TO_BE_PULLED')
         url = f'/accounts?query=(status.name=="Open" and metadata.createdDate < {file_name_date.strftime("%Y-%m-%d")} and metadata.createdDate > {max_age.strftime("%Y-%m-%d")})&limit={limit}'
-        data = self.__base_functions.get_request(url)    
+        data = self.__connector.get_request(url)    
         self.__filter_data['reportedRecordCount'] = data['resultInfo']['totalRecords']
         return data['accounts']
     
@@ -125,13 +125,13 @@ class BuildCharges:
         new_data = {}
         for p in patron_id:
             self.__filter_data['uniquePatronCount'] += 1
-            new_data[p] = self.__base_functions.get_request(f'/users/{p}')
+            new_data[p] = self.__connector.get_request(f'/users/{p}')
         for f in fines:
             f['patron'] = new_data[f['userId']]
         return fines
     
     def __get_material_data(self, fines):
-        raw_material_list = self.__base_functions.get_request('/material-types?limit=1000')
+        raw_material_list = self.__connector.get_request('/material-types?limit=1000')
         new_data = {}
         for m in raw_material_list['mtypes']:
             new_data[m['id']] = m

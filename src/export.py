@@ -10,7 +10,7 @@ from pybars import Compiler
 
 class ExportData:
 
-    def __init__(self, baseFunctions, charge_data, refund_data):
+    def __init__(self, charge_data, refund_data):
         self.__script_dir = os.path.dirname(__file__)
 
         compiler = Compiler()

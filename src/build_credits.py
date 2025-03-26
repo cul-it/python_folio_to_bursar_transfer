@@ -8,9 +8,9 @@ from src.shared.data_processor import DataProcessor  # Import the new class
 
 class BuildCredits:
 
-    def __init__(self, baseFunctions):
+    def __init__(self, connector):
         self.__script_dir = os.path.dirname(__file__)
-        self.__base_functions = baseFunctions
+        self.__connector = connector
         self.__credit_days_outstanding = os.getenv('CREDIT_DAYS_OUTSTANDING') if os.getenv('CREDIT_DAYS_OUTSTANDING') else 1
 
         #******
@@ -23,7 +23,7 @@ class BuildCredits:
             "rawRecordCount":0,
          }
 
-        self.__data_processor = DataProcessor(self.__script_dir, self.__base_functions)  # Initialize DataProcessor
+        self.__data_processor = DataProcessor(self.__script_dir, self.__connector)  # Initialize DataProcessor
 
     def get_credits(self):
         error_data = []
@@ -114,26 +114,26 @@ class BuildCredits:
             "endDate": max_age.strftime(format),
             "feeFineOwners":[]
         }
-        data = self.__base_functions.post_request(url, body)    
+        data = self.__connector.post_request(url, body)    
         return data['reportData']
     
     def __get_fee_fine_data(self, credits):
         for c in credits:
             url = f'/accounts/{c["feeFineId"]}'
-            c['feeFineData'] = self.__base_functions.get_request(url)
+            c['feeFineData'] = self.__connector.get_request(url)
         return credits
     
     def __get_patron_data(self, credits, patron_id):
         new_data = {}
         for p in patron_id:
             self.__filter_data['uniquePatronCount'] += 1
-            new_data[p] = self.__base_functions.get_request(f'/users/{p}')
+            new_data[p] = self.__connector.get_request(f'/users/{p}')
         for c in credits:
             c['patron'] = new_data[c['patronId']]
         return credits
     
     def __get_material_data(self, credits):
-        raw_material_list = self.__base_functions.get_request('/material-types?limit=1000')
+        raw_material_list = self.__connector.get_request('/material-types?limit=1000')
         new_data = {}
         for m in raw_material_list['mtypes']:
             new_data[m['id']] = m
