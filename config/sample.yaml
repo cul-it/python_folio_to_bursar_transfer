@@ -69,6 +69,26 @@ formatters:
       replace_with:"", 
       new_field:"patron.externalSystemId"
 
+processors:
+  - name: "Transfer"
+    action_type: "TRANSFER"
+    payment_method: "Bursar"
+    service_point_id: "7495d2e3-1e4b-4b6d-9f3b-1f4b1f0b1b6d"
+    user_name: "app_test"
+    comments: "STAFF : automated system"
+    filters: 
+        -   name: "FineType"
+            error_message: "Wrong Fee Fine Type"
+            load: "FeeFineTypes"
+            flatten: true
+            filter_field: "feeFineId"
+            field_transform: "NONE"
+            filter_operator: "IN_FILE"
+            filter_value: ""
+            log_error: false
+    stop_processing: true
+    process_active: true
+
 export:
   - file_name: "charges_{date}.csv"
     file_append_date: true
