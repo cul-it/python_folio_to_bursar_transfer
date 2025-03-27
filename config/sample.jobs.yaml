@@ -1,0 +1,9 @@
+name: "Transfer"
+run_env: "TEST"
+trans_active: true
+run_days: 
+    - 2
+    - 3
+    - 4
+    - 5
+job_config: "transfer.yaml"

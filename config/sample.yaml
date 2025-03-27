@@ -1,0 +1,77 @@
+max_fines_to_be_pulled: 100000
+charge_days_outstanding: 30
+charges_max_age: 365
+
+filters:
+  charge_filters:
+    - name: "FineType"
+      error_message: "Wrong Fee Fine Type"
+      load: "FeeFineTypes"
+      flatten: true
+      filter_field: "feeFineId"
+      field_transform: "NONE"
+      filter_operator: "IN_FILE"
+      filter_value: ""
+      log_error: false
+    - name: "BursarActive"
+      error_message: "Exports suspended for user"
+      load: false
+      flatten: false
+      filter_field: "patron.customFields.bursar"
+      field_transform: "NONE"
+      filter_operator: "NULL_OR_ONE_OF"
+      filter_value: 
+        - 'opt_0'
+      log_error: true
+  credit_filters:
+    - name: "BadExternalID"
+      error_message: "The external ID is not valid"
+      load: false
+      flatten: false
+      filter_field: "patron.externalSystemId"
+      field_transform: "COUNT"
+      filter_operator: "SHORTER_THAN"
+      filter_value: 10
+      log_error: true
+  process_filter:
+
+mergers:
+  charge_mergers:
+    - merge_type: "FIELD"
+      load: false
+      filter_field: false
+      new_field: "fee_owner_id"
+      field_1: "ownerId"
+      field_2: "feeFineId"
+      field_deliminator: "|"
+      field_transform: "NONE"
+  credit_mergers:
+    - merge_type: "FIELD"
+      load: false
+      filter_field: false
+      new_field: "fee_owner_id"
+      field_1: "ownerId"
+      field_2: "feeFineId"
+      field_deliminator: "|"
+      field_transform: "NONE"
+
+formatters:
+  charge_formatters:
+    - filter_field:"patron.externalSystemId", 
+      type:"LEFT_STRIP", 
+      search_for:"0", 
+      replace_with:"", 
+      new_field:"patron.externalSystemId"
+  credit_formatters:
+    - filter_field:"patron.externalSystemId", 
+      type:"LEFT_STRIP", 
+      search_for:"0", 
+      replace_with:"", 
+      new_field:"patron.externalSystemId"
+
+export:
+  - file_name: "charges_{date}.csv"
+    file_append_date: true
+    date_format: "%Y%m%d"
+    template_name: "charges"
+    template_data: "CHARGE_DATA"
