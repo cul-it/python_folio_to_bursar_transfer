@@ -24,7 +24,7 @@ class DataProcessor:
         if fines:
             # If load is not False then a JSON file is loaded and processed as the filter.
             if settings['load'] != False:
-                path = os.path.join(self.__script_dir, 'dataSets', f"{settings['load']}.json")
+                path = os.path.join(self.__script_dir, '..', 'dataSets', f"{settings['load']}.json")
                 if path:  # Check if the file exists
                     with open(path, 'r') as f:
                         test_data = json.load(f)
@@ -68,7 +68,6 @@ class DataProcessor:
                     f = self.__filter_error(f, settings)
             return new_data
         else:
-            print('Fine data is empty')
             return []
 
     def update_field_value(self, fines, settings): 
@@ -124,7 +123,7 @@ class DataProcessor:
                 final_new_key = new_keys[-1]
                 new_dict[final_new_key] = f'{current_dict_1[final_old_key_1]}{settings["field_deliminator"]}{current_dict_2[final_old_key_2]}'
         elif settings['merge_type'].upper() == "FILE":
-            path = os.path.join(self.__script_dir, 'dataSets', f"{settings['load']}.json")
+            path = os.path.join(self.__script_dir, '..', 'dataSets', f"{settings['load']}.json")
             if path:  # Check if the file exists
                 with open(path, 'r') as f:
                     merge_data = json.load(f)

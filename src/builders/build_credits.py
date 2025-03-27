@@ -8,10 +8,11 @@ from src.shared.data_processor import DataProcessor  # Import the new class
 
 class BuildCredits:
 
-    def __init__(self, connector):
+    def __init__(self, connector, settings):
+        self.__settings = settings
         self.__script_dir = os.path.dirname(__file__)
         self.__connector = connector
-        self.__credit_days_outstanding = os.getenv('CREDIT_DAYS_OUTSTANDING') if os.getenv('CREDIT_DAYS_OUTSTANDING') else 1
+        self.__credit_days_outstanding = self.__settings["credit_days_outstanding"] if self.__settings["credit_days_outstanding"] else 1
 
         #******
         #   Setup some variables to store data for processing
@@ -46,32 +47,18 @@ class BuildCredits:
         credits = self.__get_patron_data(credits, patron_id)
         # Merge patron data into the Fee fine data
         self.__filter_data['rawRecordCount'] = len(credits)
-
-        output_JSON = os.path.join(self.__script_dir, 'temp', 'credits.json')
-        with open(output_JSON, 'w') as f:
-            json.dump(credits, f, indent=4)  # Save with indentation for readability
             
+        if 'formatters' in self.__settings and 'credit_formatters' in self.__settings['formatters']:
+            for config in self.__settings['formatters']['credit_formatters']:
+                credits = self.__data_processor.update_field_value(credits, config)
 
-        i = 1
-        while f'CREDIT_REFORMAT_{i}' in os.environ:
-            settings = json.loads(os.getenv(f'CREDIT_REFORMAT_{i}'))
-            print(settings)
-            credits = self.__data_processor.update_field_value(credits, settings)
-            i += 1
-        
-        i = 1
-        while f'CREDIT_MERGE_{i}' in os.environ:
-            settings = json.loads(os.getenv(f'CREDIT_MERGE_{i}'))
-            print(settings)
-            credits = self.__data_processor.merge_field_data(credits, settings)
-            i += 1
-
-        i = 1
-        while f'CREDIT_FILTER_{i}' in os.environ:
-            settings = json.loads(os.getenv(f'CREDIT_FILTER_{i}'))
-            print(settings)
-            credits = self.__data_processor.general_filter_function(credits, settings)
-            i += 1
+        if 'mergers' in self.__settings and 'credit_mergers' in self.__settings['mergers']:
+            for config in self.__settings['mergers']['credit_mergers']:
+                credits = self.__data_processor.merge_field_data(credits, config)
+            
+        if 'filters' in self.__settings and 'credit_filters' in self.__settings['filters']:
+            for config in self.__settings['filters']['credit_filters']:
+                credits = self.__data_processor.general_filter_function(credits, config)
 
         self.__filter_data.update( self.__data_processor.get_filter_data() )
         error_data = self.__data_processor.get_error_data()
@@ -83,10 +70,6 @@ class BuildCredits:
             "error": error_data,
             "summary": self.__filter_data 
         }
-        
-        output_JSON = os.path.join(self.__script_dir, 'temp', 'credits.json')
-        with open(output_JSON, 'w') as f:
-            json.dump(formatted_data, f, indent=4)  # Save with indentation for readability
 
         return formatted_data
         

@@ -8,11 +8,12 @@ from src.shared.data_processor import DataProcessor  # Import the new class
 
 class BuildCharges:
 
-    def __init__(self, connector):
+    def __init__(self, connector, settings):
+        self.__settings = settings
         self.__script_dir = os.path.dirname(__file__)
         self.__connector = connector
-        self.__charge_days_outstanding = os.getenv('CHARGES_DAYS_OUTSTANDING') if os.getenv('CHARGES_DAYS_OUTSTANDING') else 0
-        self.__max_fine_age = os.getenv('CHARGES_MAX_AGE') if os.getenv('CHARGES_MAX_AGE') else 365
+        self.__charge_days_outstanding = self.__settings["charge_days_outstanding"] if self.__settings["charge_days_outstanding"] else 0
+        self.__max_fine_age = self.__settings["charges_max_age"] if self.__settings["charges_max_age"] else 365
 
         #******
         #   Setup some variables to store data for processing
@@ -45,29 +46,17 @@ class BuildCharges:
         # Merge patron data into the Fee fine data
         self.__filter_data['rawRecordCount'] = len(fines)
 
+        if 'formatters' in self.__settings and 'charge_formatters' in self.__settings['formatters']:
+            for config in self.__settings['formatters']['charge_formatters']:
+                fines = self.__data_processor.update_field_value(fines, config)
 
-        output_JSON = os.path.join(self.__script_dir, 'temp', 'fine.json')
-        with open(output_JSON, 'w') as f:
-            json.dump(fines, f, indent=4)  # Save with indentation for readability
+        if 'mergers' in self.__settings and 'charge_mergers' in self.__settings['mergers']:
+            for config in self.__settings['mergers']['charge_mergers']:
+                fines = self.__data_processor.merge_field_data(fines, config)
             
-
-        i = 1
-        while f'CHARGE_REFORMAT_{i}' in os.environ:
-            settings = json.loads(os.getenv(f'CHARGE_REFORMAT_{i}'))
-            fines = self.__data_processor.update_field_value(fines, settings)
-            i += 1
-        
-        i = 1
-        while f'CHARGE_MERGE_{i}' in os.environ:
-            settings = json.loads(os.getenv(f'CHARGE_MERGE_{i}'))
-            fines = self.__data_processor.merge_field_data(fines, settings)
-            i += 1
-
-        i = 1
-        while f'CHARGE_FILTER_{i}' in os.environ:
-            settings = json.loads(os.getenv(f'CHARGE_FILTER_{i}'))
-            fines = self.__data_processor.general_filter_function(fines, settings)
-            i += 1
+        if 'filters' in self.__settings and 'charge_filters' in self.__settings['filters']:
+            for config in self.__settings['filters']['charge_filters']:
+                fines = self.__data_processor.general_filter_function(fines, config)
 
         self.__filter_data.update( self.__data_processor.get_filter_data() )
         error_data = self.__data_processor.get_error_data()
@@ -79,11 +68,6 @@ class BuildCharges:
             "error": error_data,
             "summary": self.__filter_data 
         }
-        
-
-        output_JSON = os.path.join(self.__script_dir, 'temp', 'fine.json')
-        with open(output_JSON, 'w') as f:
-            json.dump(formatted_data, f, indent=4)  # Save with indentation for readability
 
         return formatted_data
         
@@ -115,7 +99,7 @@ class BuildCharges:
         cur_date = date.today()
         file_name_date = cur_date - timedelta(days=int(self.__charge_days_outstanding))
         max_age = cur_date - timedelta(days=int(self.__max_fine_age))
-        limit = os.getenv('MAX_FINES_TO_BE_PULLED')
+        limit = self.__settings["max_fines_to_be_pulled"] if self.__settings["max_fines_to_be_pulled"] else 10000000
         url = f'/accounts?query=(status.name=="Open" and metadata.createdDate < {file_name_date.strftime("%Y-%m-%d")} and metadata.createdDate > {max_age.strftime("%Y-%m-%d")})&limit={limit}'
         data = self.__connector.get_request(url)    
         self.__filter_data['reportedRecordCount'] = data['resultInfo']['totalRecords']
@@ -136,7 +120,20 @@ class BuildCharges:
         for m in raw_material_list['mtypes']:
             new_data[m['id']] = m
         for f in fines:
-            f['material'] = new_data[f['materialTypeId']]
+            if 'materialTypeId' not in f:
+                f['material'] = {
+                                    "id": "",
+                                    "name": "",
+                                    "source": "",
+                                    "metadata": {
+                                        "createdDate": "",
+                                        "createdByUserId": "",
+                                        "updatedDate": "",
+                                        "updatedByUserId": ""
+                                    }
+                }
+            else:
+                f['material'] = new_data[f['materialTypeId']]
         return fines
     
     

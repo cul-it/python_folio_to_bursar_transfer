@@ -10,18 +10,17 @@ class CallFunctions:
     
     #  init function that is ran when this class is called. 
     #  this function sets up the token and base urls used for other requests.
-    def __init__(self):
-        self.run_env = os.getenv('RUN_ENV')
+    #   run_env is the environment that the script is running in. It is defined in the jobs.yaml file as part of the current job
+    def __init__(self, job):
+        self.run_env = job['run_env']
         self.__baseurl = os.getenv(f'{self.run_env}_BASE_URL')
         self.__headers = {
                 "x-okapi-tenant": os.getenv(f'{self.run_env}_FOLIO_TENANT'),
                 "Content-Type":"application/json"
         }
-
         cookies = self.__login()
         self.__auth_cookie = {'folioAccessToken': cookies['folioAccessToken']}
         self.__renew_cookie = {'folioAccessToken': cookies['folioAccessToken']}
-        
     # Logon function.
     # Gets the auth cookie and saves it to a private variable to be used later.
     def __login(self):
@@ -59,9 +58,6 @@ class CallFunctions:
     def post_request(self, url_part, body):
         url = f'{self.__baseurl}{url_part}'
         print(url)
-        print(body)
         r = requests.post(url, json=body, cookies=self.__auth_cookie)
-        print(r.status_code)
-        print(r.json())
         data = r.json()
         return data
