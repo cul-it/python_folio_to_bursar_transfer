@@ -7,6 +7,21 @@ import csv
 import requests
 
 class CallFunctions:
+    
+    #  init function that is ran when this class is called. 
+    #  this function sets up the token and base urls used for other requests.
+    def __init__(self):
+        self.run_env = os.getenv('RUN_ENV')
+        self.__baseurl = os.getenv(f'{self.run_env}_BASE_URL')
+        self.__headers = {
+                "x-okapi-tenant": os.getenv(f'{self.run_env}_FOLIO_TENANT'),
+                "Content-Type":"application/json"
+        }
+
+        cookies = self.__login()
+        self.__auth_cookie = {'folioAccessToken': cookies['folioAccessToken']}
+        self.__renew_cookie = {'folioAccessToken': cookies['folioAccessToken']}
+        
     # Logon function.
     # Gets the auth cookie and saves it to a private variable to be used later.
     def __login(self):
@@ -30,20 +45,6 @@ class CallFunctions:
                 cookieData[cookie.name] = cookie.value
             return cookieData
         return None
-    
-    #  init function that is ran when this class is called. 
-    #  this function sets up the token and base urls used for other requests.
-    def __init__(self):
-        self.run_env = os.getenv('RUN_ENV')
-        self.__baseurl = os.getenv(f'{self.run_env}_BASE_URL')
-        self.__headers = {
-                "x-okapi-tenant": os.getenv('FOLIO_TENANT'),
-                "Content-Type":"application/json"
-        }
-
-        cookies = self.__login()
-        self.__auth_cookie = {'folioAccessToken': cookies['folioAccessToken']}
-        self.__renew_cookie = {'folioAccessToken': cookies['folioAccessToken']}
 
     def __renew_token(self):
         self.__auth_cookie = self.__login()
