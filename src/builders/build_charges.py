@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 import json
 import os
-from dotenv import load_dotenv
-load_dotenv()
 from datetime import date, timedelta
 from src.shared.data_processor import DataProcessor  # Import the new class
 
@@ -12,8 +10,6 @@ class BuildCharges:
         self.__settings = settings
         self.__script_dir = os.path.dirname(__file__)
         self.__connector = connector
-        self.__charge_days_outstanding = self.__settings["charge_days_outstanding"] if self.__settings["charge_days_outstanding"] else 0
-        self.__max_fine_age = self.__settings["charges_max_age"] if self.__settings["charges_max_age"] else 365
 
         #******
         #   Setup some variables to store data for processing
@@ -25,7 +21,7 @@ class BuildCharges:
             "rawRecordCount":0,
          }
 
-        self.__data_processor = DataProcessor(self.__script_dir, self.__connector)  # Initialize DataProcessor
+        self.__data_processor = DataProcessor(self.__script_dir)  # Initialize DataProcessor
 
     def get_charges(self):
         error_data = []
@@ -96,10 +92,14 @@ class BuildCharges:
     #***************************************************************/
 
     def __get_outstanding_fines_all(self):
-        cur_date = date.today()
-        file_name_date = cur_date - timedelta(days=int(self.__charge_days_outstanding))
-        max_age = cur_date - timedelta(days=int(self.__max_fine_age))
+        charges_max_age = self.__settings["charges_max_age"] if self.__settings["charges_max_age"] else 365
+        charge_days_outstanding = self.__settings["charge_days_outstanding"] if self.__settings["charge_days_outstanding"] else 0
         limit = self.__settings["max_fines_to_be_pulled"] if self.__settings["max_fines_to_be_pulled"] else 10000000
+
+        cur_date = date.today()
+        file_name_date = cur_date - timedelta(days=int(charge_days_outstanding))
+        max_age = cur_date - timedelta(days=int(charges_max_age))
+        
         url = f'/accounts?query=(status.name=="Open" and metadata.createdDate < {file_name_date.strftime("%Y-%m-%d")} and metadata.createdDate > {max_age.strftime("%Y-%m-%d")})&limit={limit}'
         data = self.__connector.get_request(url)    
         self.__filter_data['reportedRecordCount'] = data['resultInfo']['totalRecords']

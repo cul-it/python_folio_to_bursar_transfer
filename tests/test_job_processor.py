@@ -1,14 +1,14 @@
 import pytest
 from unittest.mock import patch
 from datetime import date
-from src.shared.job_processor import JobProcessor
+from src.job_processor import JobProcessor
 
 @pytest.fixture
 def processor():
     # Initialize the JobProcessor instance
     return JobProcessor()
 
-@patch("src.shared.job_processor.date")
+@patch("src.job_processor.date")
 def test_check_days(mock_date, processor):
     # Mock today's date to be Sunday (0)
     mock_date.today.return_value = date(2025, 3, 30)  # Sunday
@@ -26,7 +26,7 @@ def test_check_days(mock_date, processor):
     job = {}
     assert processor._JobProcessor__check_days(job) is True
 
-@patch("src.shared.job_processor.date")
+@patch("src.job_processor.date")
 def test_check_month(mock_date, processor):
     # Mock today's date to be March (03)
     mock_date.today.return_value = date(2025, 3, 30)
@@ -52,7 +52,7 @@ def test_check_month(mock_date, processor):
     job = {"run_on_month": [4, 5]}
     assert processor._JobProcessor__check_month(job) is False
 
-@patch("src.shared.job_processor.date")
+@patch("src.job_processor.date")
 def test_check_day(mock_date, processor):
     # Mock today's date to be the 30th
     mock_date.today.return_value = date(2025, 3, 30)

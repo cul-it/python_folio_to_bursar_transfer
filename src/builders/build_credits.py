@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 import json
 import os
-from dotenv import load_dotenv
-load_dotenv()
 from datetime import date, timedelta
 from src.shared.data_processor import DataProcessor  # Import the new class
 
@@ -10,9 +8,9 @@ class BuildCredits:
 
     def __init__(self, connector, settings):
         self.__settings = settings
-        self.__script_dir = os.path.dirname(__file__)
+        script_dir = os.path.dirname(__file__)
         self.__connector = connector
-        self.__credit_days_outstanding = self.__settings["credit_days_outstanding"] if self.__settings["credit_days_outstanding"] else 1
+        credit_days_outstanding = settings["credit_days_outstanding"] if settings["credit_days_outstanding"] else 1
 
         #******
         #   Setup some variables to store data for processing
@@ -24,7 +22,7 @@ class BuildCredits:
             "rawRecordCount":0,
          }
 
-        self.__data_processor = DataProcessor(self.__script_dir, self.__connector)  # Initialize DataProcessor
+        self.__data_processor = DataProcessor(script_dir)  # Initialize DataProcessor
 
     def get_credits(self):
         error_data = []
@@ -34,14 +32,14 @@ class BuildCredits:
         #pull the fee fine data
         credits = self.__get_fee_fine_data(credits)
 
+        # pull the material data and include it in the fee fine data
+        credits = self.__get_material_data(credits)
+
         # Pull the patron ids from the fee fine data and make a unique list
         patron_id = []
         for c in credits:
             patron_id.append(c['patronId'])
         patron_id = list(set(patron_id))
-
-        # pull the material data and include it in the fee fine data
-        credits = self.__get_material_data(credits)
 
         # pull user information
         credits = self.__get_patron_data(credits, patron_id)
@@ -87,8 +85,9 @@ class BuildCredits:
     #***************************************************************
 
     def __get_outstanding_credits_all(self):
+        credit_days_outstanding = self.__settings["credit_days_outstanding"] if self.__settings["credit_days_outstanding"] else 1
         cur_date = date.today()
-        min_age = cur_date - timedelta(days=int(self.__credit_days_outstanding))
+        min_age = cur_date - timedelta(days=int(credit_days_outstanding))
         max_age = cur_date - timedelta(days=1)
         format = '%Y-%m-%d'
         url = f'/feefine-reports/refund'

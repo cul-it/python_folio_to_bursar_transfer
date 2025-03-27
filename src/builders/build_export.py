@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 import json
 import os
-from dotenv import load_dotenv
-load_dotenv()
 from datetime import date, timedelta
 from src.shared.handlebars_helpers import left_pad, right_pad, format_date, format_money
 from pybars import Compiler
@@ -46,8 +44,8 @@ class ExportData:
                     date_string = f'_{date.today().strftime(conf['date_format'])}'
                     file_name = file_name.replace('{date}', date_string)
 
-                output_file = os.path.join(self.__script_dir, 'temp', file_name)
+                ## TODO: REMOVE THIS ----------------
+                output_file = os.path.join(self.__script_dir, '..', 'temp', file_name)
                 with open(output_file, 'w') as file:
                     file.write(processed_data) 
-            
-                i += 1
+                ## ---------------------------------

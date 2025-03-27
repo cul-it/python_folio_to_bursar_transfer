@@ -178,3 +178,6 @@ dataSets/
 temp/
 bin/
 ENV_DIR/pyvenv.cfg
+config/*
+!config/sample.yaml
+!config/sample.jobs.yaml

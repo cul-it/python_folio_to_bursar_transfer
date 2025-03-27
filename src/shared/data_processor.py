@@ -2,9 +2,8 @@ import json
 import os
 
 class DataProcessor:
-    def __init__(self, script_dir, base_functions):
+    def __init__(self, script_dir):
         self.__script_dir = script_dir
-        self.__base_functions = base_functions
         self.__filter_data = {}
         self.__error_data = []
 
@@ -57,9 +56,9 @@ class DataProcessor:
                     case "NULL_OR_ONE_OF":
                         valCheck = True if tmpVal == False or tmpVal in filter_value else False
                     case "LONGER_THAN":
-                        valCheck = True if int(tmpVal) > int(filter_value) else False
+                        valCheck = True if tmpVal != False and int(tmpVal) > int(filter_value) else False
                     case "SHORTER_THAN":
-                        valCheck = True if int(tmpVal) < int(filter_value) else False
+                        valCheck = True if tmpVal != False and int(tmpVal) < int(filter_value) else False
 
                 if valCheck == True:
                     self.__filter_data[f'passed{settings["name"]}'] += 1
