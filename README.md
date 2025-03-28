@@ -11,18 +11,35 @@ source .venv/bin/activate
 pip install \-r requirements.txt
 ```
 
-# Setup
-Before this script can be installed and ran remotely the data sets need be generated. 
+# Configuration
+
+Please see the wiki for .env values and configuration file settings.
+The system uses a mix of environment variables and configuration files to manage settings. Secrets are stored in the .env file while job, and processing settings are stored in yaml files located in the `config` directory.
+
+# Data files
+Before this script can be installed and ran remotely the data sets need be generated. Theses can be done manually or using the provided utility scripts.
 
 # Running  
 
+```bash
+python ./main.py
+```
 
+# Testing  
+
+All tests are written using pytest and can be run using the following command:
+
+```bash
+pytest
+```
+
+Tests are located in the `tests` directory with one test file per class. At the tiem or writing the tests are not complete and are a work in progress.
 
 # Contributing  
 
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change. Please also fork as needed.
  
-# .env File  
+
 
 # License 
 
