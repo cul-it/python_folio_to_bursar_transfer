@@ -188,8 +188,8 @@ class DataProcessor:
                     current_dict_2[final_old_key_2]}'
         elif settings['merge_type'].upper() == "FILE":
             path = os.path.join(
-                self.__script_dir, '..', 'dataSets', f"{
-                    settings['load']}.json", encoding='utf-8')
+                self.__script_dir, '..', 'dataSets',
+                    f"{settings['load']}.json")
             if path:  # Check if the file exists
                 with open(path, 'r', encoding='utf-8') as f:
                     merge_data = json.load(f)
@@ -287,3 +287,5 @@ class DataProcessor:
         for x in ary:
             new_data.append(x['uuid'])
         return new_data
+
+# End class DataProcessor

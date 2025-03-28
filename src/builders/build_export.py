@@ -3,6 +3,7 @@ import os
 from datetime import date
 from src.shared.handlebars_helpers import left_pad, right_pad, format_date, format_money
 from pybars import Compiler
+from src.uploaders.aws_bucket import S3Uploader
 
 
 class ExportData:
@@ -63,10 +64,23 @@ class ExportData:
                             conf['date_format'])}'
                     file_name = file_name.replace('{date}', date_string)
 
+                self.__ship_package(conf, file_name, processed_data)
+
                 # TODO: REMOVE THIS ----------------
                 output_file = os.path.join(
                     self.__script_dir, '..', 'temp', file_name)
                 with open(output_file, 'w') as file:
                     file.write(processed_data)
                 # ---------------------------------
+
+    def __ship_package(self, conf, file_name, data):
+        """
+        This function is responsible for shipping the package.
+        The location is based on the configuration file.
+        """
+        match conf['export_type'].upper():
+            case 'S3':
+                s3_uploader = S3Uploader(env_key=conf['env_key'])
+                s3_uploader.upload_file_from_string(data, file_name)
+        return
 # End of class ExportData
