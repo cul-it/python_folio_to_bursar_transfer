@@ -42,19 +42,21 @@ class JobProcessor:
             # build the credit data
             build_credits = BuildCredits(connector, settings)
             refund_data = build_credits.get_credits()
+
+            # Process the Fine data
+            trans_active = job["trans_active"] if 'trans_active' in job else False
+            process = ProcessFines(connector, charge_data["data"], settings, trans_active)
+            process_data = process.get_process_data()
             
             # TODO: REMOVE THIS ----------------
-            dump = { "credits": refund_data, "charges": charge_data }
+            dump = { "charges": charge_data, "credits": refund_data, "process": process_data }
             output_JSON = os.path.join(os.path.dirname(__file__), 'temp', 'dump.json')
             with open(output_JSON, 'w') as f:
                 json.dump(dump, f, indent=4)  # Save with indentation for readability
             # ---------------------------------
 
-            # Process the Fine data
-            ProcessFines(connector, charge_data, settings)
-
             #build the export data
-            ExportData(charge_data, refund_data, settings)
+            ExportData(charge_data, refund_data, process_data, settings)
 
 
     def __check_days(self, job):

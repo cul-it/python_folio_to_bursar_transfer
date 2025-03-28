@@ -1,36 +1,39 @@
 #!/usr/bin/env python3
 import json
 import os
-from dotenv import load_dotenv
-load_dotenv()
-from datetime import date, timedelta
 from src.shared.data_processor import DataProcessor  # Import the new class
 
 class ProcessFines:
 
-    def __init__(self, connector, fines, settings):
+    def __init__(self, connector, fines, settings, trans_active):
         self.__script_dir = os.path.dirname(__file__)
         self.__connector = connector
-        self.__data_processor = DataProcessor(self.__script_dir, self.__connector)  # Initialize DataProcessor
-        
-        i = 1
-        while f'PROCESS_{i}' in os.environ:
-            working_fines = fines
-            settings = json.loads(os.getenv(f'PROCESS_{i}'))
-            if settings["filters"]:
-                filters = settings["filters"].split(',')
-                for f in filters:
-                    filter = json.loads(os.getenv(f))
-                    working_fines = self.__data_processor.general_filter_function(working_fines, filter)
-            self.__process_fine(working_fines, settings)
-            fines = [item for item in fines if item not in working_fines]
-            
+        self.__data_processor = DataProcessor(self.__script_dir)  # Initialize DataProcessor
+
+        self.return_data = {}
+        if 'processors' in settings and settings["processors"] and len(settings["processors"]) > 0:
+            for config in settings['processors']:  
+                working_fines = fines
+                if 'filters' in config and config["filters"] and len(config["filters"]) > 0:
+                    for f in config["filters"]:
+                        filter = json.loads(os.getenv(f))
+                        working_fines = self.__data_processor.general_filter_function(working_fines, filter)
+                working_fines = self.__process_fine(working_fines, config, trans_active)
+                self.return_data[config["name"]] = working_fines
+                if 'stop_processing' in config and config['stop_processing']:
+                    fines = [item for item in fines if item not in working_fines]
+        return
+
+    def get_process_data(self):
+        return self.return_data  
     
-    def __process_fine(self, fines, settings):
+    def __process_fine(self, fines, settings, trans_active):
+        process_active = settings["process_active"] if trans_active in settings else True
+        do_transfer = not (str(process_active).lower() == "false" or str(trans_active).lower() == "false")
         for fine in fines:
             accountId = fine["id"]
             amount = fine["amount"]
-            fine["transfer"] = []
+            fine["transfer"] = {}
             action = settings["action_type"].lower()
             if amount > 0:
                 body = { "amount": amount }
@@ -47,14 +50,16 @@ class ProcessFines:
                             "paymentMethod":settings["payment_method"]
                         }
                     url_2 = f"/accounts/{accountId}/{action}"
-                    # transfer_response = self.__connector.post_request(url_2, body_2)
-                    transfer_response = {
-                        "status": "success",
-                        "message": "Transfer Successful",
-                        "url": url_2,
-                        "body": body_2
-                    }
-                    fine["transfer"]["process"] = transfer_response
+                    if do_transfer:
+                        # fine["transfer"]["process"] = self.__connector.post_request(url_2, body_2)
+                        fine["transfer"]["process"] = { "message": "UGGGG" }
+                    else:
+                        fine["transfer"]["process"] = {
+                            "status": "NOT PROCESSED",
+                            "message": "TRANSFER NOT PROCESSED",
+                            "url": url_2,
+                            "body": body_2
+                        }
                 else:
                     fine["transfer"]["process"] = {}
                     fine["transfer"]["errors"] = "Not Allowed"

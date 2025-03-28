@@ -8,7 +8,7 @@ from pybars import Compiler
 
 class ExportData:
 
-    def __init__(self, charge_data, refund_data, settings):
+    def __init__(self, charge_data, refund_data, process_data, settings):
         self.__script_dir = os.path.dirname(__file__)
 
         compiler = Compiler()
