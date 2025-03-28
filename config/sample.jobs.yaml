@@ -1,6 +1,13 @@
-vars:
-  run_env: "TEST"
-  trans_active: true
+
+# variables can be defined for use in the job file.
+# This allows you to re-use values or have a common place to set a variable used for different jobs.
+# one common use case is have an trans-Active global that will turn on or off all your jobs..
+# vars:
+#   run_env: "TEST"
+#   trans_active: true
+#
+# variables can be used as follows:
+#   - name: "${run_env}"
 
 jobs:
     -   name: "Transfer"
