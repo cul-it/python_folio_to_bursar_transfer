@@ -45,19 +45,15 @@ class JobProcessor:
             job_config = os.path.join('config', job['job_config'])
 
             # Get the job configuration file
-            # loader = YamlLoader()
             settings = YamlLoader().load_config(job_config)
 
             # set up the connector to FOLIO -- this is used by all functions to
-            # call the FOLIO system
             connector = CallFunctions(job)
 
             # # build the charge data
-            # build_charges = BuildCharges(connector, settings)
             charge_data = BuildCharges(connector, settings).get_charges()
 
             # build the credit data
-            # build_credits = BuildCredits(connector, settings)
             refund_data = BuildCredits(connector, settings).get_credits()
 
             # Process the Fine data
@@ -68,7 +64,7 @@ class JobProcessor:
                 settings,
                 trans_active).get_process_data()
 
-            #TODO: REMOVE THIS ----------------
+            #TODO: REMOVE THIS ---------------- pylint: disable=fixme
             dump = {
                 "charges": charge_data,
                 "credits": refund_data,
@@ -82,8 +78,50 @@ class JobProcessor:
 
             # build the export data
             ExportData(charge_data, refund_data, process_data, settings)
-        return
-    
+
+    def run_test_job(self, job):
+        """
+        This function runs a test job based on the provided job configuration.
+        It is used
+        for testing purposes and is not intended for production use.
+        :param job: The job configuration dictionary.
+        """
+        job_config = os.path.join('config', job['job_config'])
+
+        # Get the job configuration file
+        settings = YamlLoader().load_config(job_config)
+
+        # set up the connector to FOLIO -- this is used by all functions to
+        connector = CallFunctions(job)
+
+        # # build the charge data
+        charge_data = BuildCharges(connector, settings).get_charges()
+
+        # build the credit data
+        refund_data = BuildCredits(connector, settings).get_credits()
+
+        # Process the Fine data
+        process_data = ProcessFines(
+            connector,
+            charge_data["data"],
+            settings,
+            False).get_process_data()
+
+        #TODO: REMOVE THIS ---------------- pylint: disable=fixme
+        dump = {
+            "charges": charge_data,
+            "credits": refund_data,
+            "process": process_data}
+        output_json = os.path.join(
+            os.path.dirname(__file__), 'temp', 'dump.json')
+        with open(output_json, 'w', encoding='utf-8') as f:
+            # Save with indentation for readability
+            json.dump(dump, f, indent=4)
+        # ---------------------------------
+
+        # build the export data
+        ExportData(charge_data, refund_data, process_data, settings)
+
     def __check_days(self, job):
         """
         This function checks if the job should run on the current day of the week.

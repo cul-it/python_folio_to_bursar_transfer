@@ -1,6 +1,4 @@
 # beginning of file
-from datetime import date, datetime
-
 """
 This module contains helper functions for handlebars templates.
 exposed methods:
@@ -20,7 +18,9 @@ Usage:
     {{format_money <<FIELD>>}}
 """
 
+from datetime import date, datetime
 
+#pylint: disable-next=unused-argument
 def left_pad(context, value, width=5, char=' '):
     """
     Left pad a value with a character to a specified width. (Required by handlebars)
@@ -32,7 +32,7 @@ def left_pad(context, value, width=5, char=' '):
     """
     return str(value).rjust(width, char)
 
-
+#pylint: disable-next=unused-argument
 def right_pad(context, value, width=5, char=' '):
     """
     Right pad a value with a character to a specified width. (Required by handlebars)
@@ -44,8 +44,8 @@ def right_pad(context, value, width=5, char=' '):
     """
     return str(value).ljust(width, char)
 
-
-def format_date(context, value, format='%Y-%m-%d', import_format=False):
+#pylint: disable-next=unused-argument
+def format_date(context, value, output_format='%Y-%m-%d', import_format=False):
     """
     Format a date string to a specified format.
     :param context: The context in which the helper is called. (Required by handlebars)
@@ -66,8 +66,9 @@ def format_date(context, value, format='%Y-%m-%d', import_format=False):
             wrk_date = datetime.fromisoformat(value).date()
         except ValueError as exc:
             raise ValueError("Invalid date format") from exc
-    return wrk_date.strftime(format)
+    return wrk_date.strftime(output_format)
 
+#pylint: disable-next=unused-argument
 def format_money(context, value):
     """
     Format a number to a currency string with two decimal places.
@@ -77,4 +78,4 @@ def format_money(context, value):
     """
     return f"{float(value):.2f}"
 
-# End of file
+# End of src/shared/handlebars_helpers.py

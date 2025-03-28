@@ -17,8 +17,10 @@ class CallFunctions:
     init:
         job: The job object that is passed to the script. This is used to get the run_env.
     exposed methods:
-        get_requests(url_part: str) -> dict: This function is used to perform a get action against the FOLIO API.
-        post_requests(url_part: str, body: dict) -> dict: This function is used to perform a post action against the FOLIO API.
+        get_requests(url_part: str) -> dict: This function is used to perform a get 
+            action against the FOLIO API.
+        post_requests(url_part: str, body: dict) -> dict: This function is used to 
+            perform a post action against the FOLIO API.
     Internal methods:
         __login() -> dict: This function is used to get the auth token.
         __renew_token() -> None: This function is used to renew the auth token.
@@ -33,6 +35,7 @@ class CallFunctions:
         }
         cookies = self.__login()
         self.__auth_cookie = {'folioAccessToken': cookies['folioAccessToken']}
+        #pylint: disable-next=unused-private-member
         self.__renew_cookie = {'folioAccessToken': cookies['folioAccessToken']}
     # Logon function.
     # Gets the auth cookie and saves it to a private variable to be used later.
@@ -52,12 +55,13 @@ class CallFunctions:
         r = requests.post(url, json=data, headers=self.__headers, timeout=30)
         r.raise_for_status()
         if r.status_code == 201:
-            cookieData = {}
+            cookie_data = {}
             for cookie in r.cookies:
-                cookieData[cookie.name] = cookie.value
-            return cookieData
+                cookie_data[cookie.name] = cookie.value
+            return cookie_data
         return None
 
+    #pylint: disable-next=unused-private-member
     def __renew_token(self):
         """
         This function is used to renew the auth token.

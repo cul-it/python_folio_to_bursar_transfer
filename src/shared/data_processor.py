@@ -23,7 +23,8 @@ class DataProcessor:
     Internal methods:
         __filter_error(data : dict, settings : dict) -> dict: Collects and formats the error data
             for later use.
-        __filter_get_field_value(data : dict, settings : dict) -> any : Gets the field value from the data set.
+        __filter_get_field_value(data : dict, settings : dict) -> any : Gets the field 
+            value from the data set.
         __flatten_array(ary : list) -> list: Flattens an array of dictionaries.
     """
 
@@ -36,7 +37,9 @@ class DataProcessor:
         """
         This function returns the filter data that has been processed.
         """
-        return self.__filter_data
+        if self.__filter_data:
+            return self.__filter_data
+        return None
 
     def get_error_data(self):
         """
@@ -44,6 +47,7 @@ class DataProcessor:
         """
         return self.__error_data
 
+    #pylint: disable-next=inconsistent-return-statements
     def general_filter_function(self, fines, settings):
         """
         This function is used to filter the data based on the settings passed in.
@@ -110,8 +114,7 @@ class DataProcessor:
                 else:
                     f = self.__filter_error(f, settings)
             return new_data
-        else:
-            return []
+        return []
 
     def update_field_value(self, fines, settings):
         """
@@ -152,9 +155,9 @@ class DataProcessor:
                             search_for)
                     case 'MOVE':
                         new_dict[final_new_key] = current_dict[final_old_key]
-
         return fines
 
+    #pylint: disable-next=inconsistent-return-statements, too-many-locals
     def merge_field_data(self, fines, settings):
         """
         This function is used to merge the data based on the settings passed in.
@@ -186,9 +189,9 @@ class DataProcessor:
         elif settings['merge_type'].upper() == "FILE":
             path = os.path.join(
                 self.__script_dir, '..', 'dataSets', f"{
-                    settings['load']}.json")
+                    settings['load']}.json", encoding='utf-8')
             if path:  # Check if the file exists
-                with open(path, 'r') as f:
+                with open(path, 'r', encoding='utf-8') as f:
                     merge_data = json.load(f)
             else:
                 return
@@ -204,7 +207,6 @@ class DataProcessor:
                 # Apply the replacement
                 final_new_key = new_keys[-1]
                 new_dict[final_new_key] = merge_data[key_value]
-
         return fines
 
     def gen_data_summary(self, fine, name):

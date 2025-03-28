@@ -5,7 +5,7 @@ import re
 import os
 import yaml
 
-
+#pylint: disable-next=too-few-public-methods
 class YamlLoader:
     """
     This class is used to load YAML files with support for includes and variable substitution.
@@ -28,6 +28,7 @@ class YamlLoader:
         :return: The processed YAML data with variables replaced.
         """
         def replace_variables(obj):
+            #pylint: disable-next=no-else-return
             if isinstance(obj, str):
                 # Replace placeholders like ${var_name} with their values
                 return re.sub(
@@ -52,7 +53,7 @@ class YamlLoader:
         :param file_path: The path to the YAML file to load.
         :return: The processed YAML data as a dictionary.
         """
-        with open(file_path, "r") as file:
+        with open(file_path, "r", encoding='utf-8') as file:
             main_data = yaml.safe_load(file)
 
         # Extract variables from the main file
@@ -65,7 +66,7 @@ class YamlLoader:
             for include_file in main_data["include"]:
                 include_path = os.path.join(
                     os.path.dirname(file_path), include_file)
-                with open(include_path, "r") as included_file:
+                with open(include_path, "r", encoding='utf-8') as included_file:
                     included_data = yaml.safe_load(included_file)
 
                     # Extract variables from the included file
@@ -85,10 +86,10 @@ class YamlLoader:
                         main_data.update(included_data)
                     else:
                         raise ValueError(
-                            f"Included file {include_file} must contain a dictionary at the top level.")
+                            f"Included file {include_file} must contain a dictionary at the top level.")# pylint: disable=line-too-long
 
         # Remove the "include" key from the main data after processing
         main_data.pop("include", None)
 
         return main_data
-# End of YamlLoader class
+# End of src/shared/yaml_loader.py
