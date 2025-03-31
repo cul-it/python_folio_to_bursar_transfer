@@ -181,3 +181,6 @@ ENV_DIR/pyvenv.cfg
 config/*
 !config/sample.yaml
 !config/sample.jobs.yaml
+refrence.md
+test_me.py
+src/templates/email.handlebars
