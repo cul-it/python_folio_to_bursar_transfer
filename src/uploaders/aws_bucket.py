@@ -4,6 +4,8 @@ This class provides methods to upload files to an AWS S3 bucket.
 It supports uploading files from a string or a local file path.
 """
 import os
+import tempfile
+import io
 import boto3
 from botocore.exceptions import NoCredentialsError, PartialCredentialsError
 from dotenv import load_dotenv
@@ -38,15 +40,20 @@ class S3Uploader:
         :return: The S3 URL of the uploaded file.
         """
         try:
-            self.__s3_client.put_object(Bucket=self.__bucket_name, Key=s3_key, Body=file_content)
+            self.__s3_client.put_object(
+                Bucket=self.__bucket_name,
+                Key=s3_key,
+                Body=file_content)
             s3_url = f"https://{self.__bucket_name}.s3.amazonaws.com/{s3_key}"
             return s3_url
         except NoCredentialsError as exc:
-            #pylint: disable-next=too-many-function-args
-            raise NoCredentialsError("Error: AWS credentials not found.") from exc
+            # pylint: disable-next=too-many-function-args
+            raise NoCredentialsError(
+                "Error: AWS credentials not found.") from exc
         except PartialCredentialsError as exc:
-            #pylint: disable-next=too-many-function-args
-            raise PartialCredentialsError("Incomplete AWS credentials.") from exc
+            # pylint: disable-next=too-many-function-args
+            raise PartialCredentialsError(
+                "Incomplete AWS credentials.") from exc
         except Exception as e:
             raise RuntimeError(f"An error occurred: {e}") from e
 
@@ -62,13 +69,16 @@ class S3Uploader:
             s3_url = f"https://{self.__bucket_name}.s3.amazonaws.com/{s3_key}"
             return s3_url
         except FileNotFoundError as exc:
-            raise FileNotFoundError(f"Error: The file {file_path} was not found.") from exc
+            raise FileNotFoundError(
+                f"Error: The file {file_path} was not found.") from exc
         except NoCredentialsError as exc:
-            #pylint: disable-next=too-many-function-args
-            raise NoCredentialsError("Error: AWS credentials not found.") from exc
+            # pylint: disable-next=too-many-function-args
+            raise NoCredentialsError(
+                "Error: AWS credentials not found.") from exc
         except PartialCredentialsError as exc:
-            #pylint: disable-next=too-many-function-args
-            raise PartialCredentialsError("Error: Incomplete AWS credentials.") from exc
+            # pylint: disable-next=too-many-function-args
+            raise PartialCredentialsError(
+                "Error: Incomplete AWS credentials.") from exc
         except Exception as e:
             raise RuntimeError(f"An error occurred: {e}") from e
 
@@ -78,13 +88,15 @@ class S3Uploader:
         :return: A list of file keys in the bucket.
         """
         try:
-            response = self.__s3_client.list_objects_v2(Bucket=self.__bucket_name)
+            response = self.__s3_client.list_objects_v2(
+                Bucket=self.__bucket_name)
             if "Contents" in response:
                 files = [item["Key"] for item in response["Contents"]]
                 return files
             return []
         except Exception as e:
-            raise RuntimeError(f"An error occurred while listing files: {e}") from e
+            raise RuntimeError(
+                f"An error occurred while listing files: {e}") from e
 
     def delete_file(self, s3_key):
         """
@@ -92,9 +104,57 @@ class S3Uploader:
         :param s3_key: The key (path) of the file to delete in the S3 bucket.
         """
         try:
-            self.__s3_client.delete_object(Bucket=self.__bucket_name, Key=s3_key)
+            self.__s3_client.delete_object(
+                Bucket=self.__bucket_name, Key=s3_key)
             return {"message": f"File {s3_key} deleted successfully."}
         except Exception as e:
-            raise RuntimeError(f"An error occurred while deleting the file: {e}") from e
+            raise RuntimeError(
+                f"An error occurred while deleting the file: {e}") from e
+
+    def download_file_to_temp(self, s3_key):
+        """
+        Download a file from the S3 bucket to a temporary location.
+        :param s3_key: The key (path) of the file in the S3 bucket.
+        :return: The path to the temporary file.
+        """
+        try:
+            # Create a temporary file
+            with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+                # Write the file to the temporary file
+                temp_file.write(b"")
+            temp_file_path = temp_file.name
+            temp_file.close()
+
+            # Download the file from S3 to the temporary file
+            self.__s3_client.download_file(
+                self.__bucket_name, s3_key, temp_file_path)
+            return temp_file_path
+        except Exception as e:
+            raise RuntimeError(
+                f"An error occurred while downloading the file: {e}") from e
+
+    def download_file_as_variable(self, s3_key):
+        """
+        Download a file from the S3 bucket and return its content as a variable.
+        :param s3_key: The key (path) of the file in the S3 bucket.
+        :return: The content of the file as a string.
+        """
+        try:
+            # Create an in-memory file-like object
+            file_obj = io.BytesIO()
+
+            # Download the file from S3 into the in-memory object
+            self.__s3_client.download_fileobj(
+                self.__bucket_name, s3_key, file_obj)
+
+            # Move the pointer to the beginning of the file
+            file_obj.seek(0)
+
+            # Read the content as a string (or bytes if needed)
+            file_content = file_obj.read().decode('utf-8')  # Decode as UTF-8 string
+            return file_content
+        except Exception as e:
+            raise RuntimeError(
+                f"An error occurred while downloading the file: {e}") from e
 
 # End of class S3Uploader
