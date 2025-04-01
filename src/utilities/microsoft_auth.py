@@ -28,7 +28,7 @@ class Auth360Account: #pylint: disable=too-few-public-methods
         print("\n\n"
               "---------------------------------------->>>>>>>\n")
         client_secret = input(
-            "Enter your prom`Value`. Found on the "
+            "Enter your prom `Value`. Found on the "
             "'Certificates & secrets' page for your app certificate: ")
         print("\n\n"
               "----------------------------------------\n"
