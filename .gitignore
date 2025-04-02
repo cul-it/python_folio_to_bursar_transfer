@@ -184,3 +184,4 @@ config/*
 refrence.md
 test_me.py
 src/templates/email.handlebars
+secrets/

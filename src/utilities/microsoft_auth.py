@@ -3,6 +3,7 @@ This script is used to authenticate a 360 account using the O365 library.
 It will prompt the user for their client ID, client secret, and the location to save the token file.
 It will then authenticate the account and save the token file to the specified location.
 """
+import readline
 from O365 import Account, FileSystemTokenBackend
 
 
@@ -28,7 +29,7 @@ class Auth360Account: #pylint: disable=too-few-public-methods
         print("\n\n"
               "---------------------------------------->>>>>>>\n")
         client_secret = input(
-            "Enter your prom `Value`. Found on the "
+            "Enter your client `Value`. Found on the "
             "'Certificates & secrets' page for your app certificate: ")
         print("\n\n"
               "----------------------------------------\n"
