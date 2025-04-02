@@ -50,9 +50,11 @@ class SftpUploader:
                 certificate = s3_uploader.download_file_as_variable(
                     f"{env_key}_CERTIFICATE_PATH")
             if os.getenv(f"{env_key}_KEY_TYPE").upper() == 'RSA':
-                certificate = paramiko.RSAKey.from_private_key(io.StringIO(certificate))
+                certificate = paramiko.RSAKey.from_private_key(
+                    io.StringIO(certificate))
             else:
-                certificate = paramiko.Ed25519Key.from_private_key(io.StringIO(certificate))
+                certificate = paramiko.Ed25519Key.from_private_key(
+                    io.StringIO(certificate))
 
         # See if a known_hosts file is provided
         # If not, we will use the AutoAddPolicy
@@ -71,7 +73,8 @@ class SftpUploader:
                     known_hosts = file.read()
             elif 'AWS' in os.getenv(f"{env_key}_KNOW_HOSTS_LOCATION").upper():
                 # AWS certificate from S3
-                s3_uploader = S3Uploader(os.getenv(f"{env_key}_KNOW_HOSTS_LOCATION").upper())
+                s3_uploader = S3Uploader(
+                    os.getenv(f"{env_key}_KNOW_HOSTS_LOCATION").upper())
                 known_hosts = s3_uploader.download_file_as_variable(
                     os.getenv(f"{env_key}_KNOW_HOSTS_PATH")
                 )
@@ -93,7 +96,7 @@ class SftpUploader:
                     hostname=line_values[0],
                     keytype=line_values[1],
                     key=key_obj
-                    )
+                )
             self.__ssh_client.set_missing_host_key_policy(
                 paramiko.RejectPolicy())
 

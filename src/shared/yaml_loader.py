@@ -71,7 +71,10 @@ class YamlLoader:
 
                     # Extract variables from the included file
                     local_variables = included_data.get("vars", [])
-                    all_variables = {key: value for d in global_variables + local_variables for key, value in d.items()}
+                    all_variables = {
+                        key: value for d in global_variables + local_variables for key,
+                        value in d.items()
+                    }
 
                     # Replace variables in the included file
                     included_data = self.__load_yaml_with_variables(

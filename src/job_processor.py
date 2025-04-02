@@ -70,7 +70,7 @@ class JobProcessor:
                 "credits": refund_data,
                 "process": process_data}
             output_json = os.path.join(
-                os.path.dirname(__file__), '..', 'temp', 
+                os.path.dirname(__file__), '..', 'temp',
                 'dump.json')
             with open(output_json, 'w', encoding='utf-8') as f:
                 # Save with indentation for readability
@@ -114,19 +114,19 @@ class JobProcessor:
             False).get_process_data()
 
         #TODO: REMOVE THIS ---------------- pylint: disable=fixme
-        dump = {
-            "charges": charge_data,
-            "credits": refund_data,
-            "process": process_data}
+        working_data = {
+            "charge_data": charge_data,
+            "refund_data": refund_data,
+            "process_data": process_data}
         output_json = os.path.join(
             os.path.dirname(__file__), 'temp', 'dump.json')
         with open(output_json, 'w', encoding='utf-8') as f:
             # Save with indentation for readability
-            json.dump(dump, f, indent=4)
+            json.dump(working_data, f, indent=4)
         # ---------------------------------
 
         # build the export data
-        ExportData(charge_data, refund_data, process_data, settings)
+        ExportData(working_data, settings)
 
     def __check_days(self, job):
         """

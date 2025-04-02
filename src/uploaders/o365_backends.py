@@ -1,7 +1,15 @@
+""" AWS S3 backend to store tokens """
+#pylint: skip-file
+# Skipping lint as this fiel is based of the O365 library
 import os
+import boto3
 from O365.utils import BaseTokenBackend
+import logging
 from dotenv import load_dotenv
 
+# Configure logging
+log = logging.getLogger(__name__)
+log.setLevel(logging.INFO)
 
 class CustomAwsS3Backend(BaseTokenBackend):
     """ An AWS S3 backend to store tokens """
@@ -13,10 +21,7 @@ class CustomAwsS3Backend(BaseTokenBackend):
         """
         # Load environment variables from the .env file
         load_dotenv()
-        try:
-            import boto3
-        except ModuleNotFoundError as e:
-            raise Exception('Please install the boto3 package to use this token backend.') from e
+
         super().__init__()
         self._bucket_name = os.getenv(f"{env_key}_BUCKET")
         self.filename = filename
@@ -28,7 +33,7 @@ class CustomAwsS3Backend(BaseTokenBackend):
         )
 
     def __repr__(self):
-        return "AWSS3Backend('{}', '{}')".format(self._bucket_name, self.filename)
+        return f"AWSS3Backend({self._bucket_name}, {self.filename})"
 
     def load_token(self) -> bool:
         """
@@ -36,10 +41,11 @@ class CustomAwsS3Backend(BaseTokenBackend):
          :return bool: Success / Failure
         """
         try:
-            token_object = self._client.get_object(Bucket=self._bucket_name, Key=self.filename)
+            token_object = self._client.get_object(
+                Bucket=self._bucket_name, Key=self.filename)
             self._cache = self.deserialize(token_object['Body'].read())
         except Exception as e:
-            log.error("Token ({}) could not be retrieved from the backend: {}".format(self.filename, e))
+            log.error(f"Token ({self.filename}) could not be retrieved from the backend: {e}")
             return False
         return True
 
@@ -87,12 +93,15 @@ class CustomAwsS3Backend(BaseTokenBackend):
         :return bool: Success / Failure
         """
         try:
-            r = self._client.delete_object(Bucket=self._bucket_name, Key=self.filename)
+            self._client.delete_object(
+                Bucket=self._bucket_name, Key=self.filename)
         except Exception as e:
             log.error("Token file could not be deleted: {}".format(e))
             return False
         else:
-            log.warning("Deleted token file {} in bucket {}.".format(self.filename, self._bucket_name))
+            log.warning(
+                "Deleted token file {} in bucket {}.".format(
+                    self.filename, self._bucket_name))
             return True
 
     def check_token(self) -> bool:
@@ -101,8 +110,10 @@ class CustomAwsS3Backend(BaseTokenBackend):
         :return bool: True if it exists on the store
         """
         try:
-            _ = self._client.head_object(Bucket=self._bucket_name, Key=self.filename)
-        except:
+            _ = self._client.head_object(
+                Bucket=self._bucket_name, Key=self.filename)
+        except BaseException:
             return False
-        else:
-            return True
+        return True
+
+# End of Class CustomAwsS3Backend

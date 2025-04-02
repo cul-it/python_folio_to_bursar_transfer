@@ -1,15 +1,18 @@
 """Python script to send emails using Microsoft Graph API with OAuth2 authentication."""
 import os
-from O365 import Account, FileSystemTokenBackend, AwsS3TokenBackend
-from src.uploaders.o365_backends import CustomAwsS3Backend
-from dotenv import load_dotenv
-
 from io import BytesIO
+from dotenv import load_dotenv
+from O365 import Account, FileSystemTokenBackend
+from O365.utils import AWSS3Backend
+from src.uploaders.o365_backends import CustomAwsS3Backend
+
+
 
 class MSEmail:
     """
     A class to handle sending emails using Microsoft Graph API.
     """
+
     def __init__(self, env_key):
         """
         Initializes the MSEmail class with client ID, client secret, and tenant ID.
@@ -17,14 +20,17 @@ class MSEmail:
         # Load environment variables from the .env file
         load_dotenv()
 
-        credentials=(os.getenv(f"{env_key}_CLIENT_ID"), os.getenv(f"{env_key}_CERTIFICATE_VALUE"))
+        credentials = (
+            os.getenv(
+                f"{env_key}_CLIENT_ID"), os.getenv(
+                f"{env_key}_CERTIFICATE_VALUE"))
 
         match os.getenv(f"{env_key}_AUTH_LOCATION").upper():
             case 'LOCAL':
                 print('Loading local credentials...')
                 # Local certificate from the local file system
                 token_backend = FileSystemTokenBackend(
-                    token_path = os.getenv(f"{env_key}_AUTH_PATH"),
+                    token_path=os.getenv(f"{env_key}_AUTH_PATH"),
                     token_filename=f"{env_key}_TOKEN.json"
                 )
             case 'S3_SECURE':
@@ -32,14 +38,15 @@ class MSEmail:
                 token_backend = CustomAwsS3Backend(
                     env_key=os.getenv(f"{env_key}_AUTH_PATH"),
                     filename='f"{env_key}_TOKEN.json'
-                    )
+                )
             case 'S3':
-                token_backend = AwsS3TokenBackend(
+                token_backend = AWSS3Backend(
                     bucket_name=os.getenv(f"{env_key}_AUTH_PATH"),
                     filename=f"{env_key}_TOKEN.json"
                 )
             case _:
-                raise ValueError("Invalid AUTH_LOCATION. Must be 'LOCAL' or 'AWS'.")
+                raise ValueError(
+                    "Invalid AUTH_LOCATION. Must be 'LOCAL' or 'AWS'.")
 
         # Initialize the account with the credentials and token backend
         # the default protocol will be Microsoft Graph
@@ -62,7 +69,7 @@ class MSEmail:
             to = to.split(' ')
         else:
             to = [to]
-        
+
         new_body = f"""<html><body>
                      {body.replace('\n', '<br>')}
                 </body></html>"""
@@ -71,7 +78,6 @@ class MSEmail:
         self.__message.body = new_body
 
         return True
-    
 
     def send_message(self):
         """
