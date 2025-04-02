@@ -8,6 +8,7 @@ from pybars import Compiler
 from src.uploaders.aws_bucket import S3Uploader
 from src.uploaders.sfpt import SftpUploader
 from src.uploaders.ms_email import MSEmail
+from src.uploaders.smtp_email import SMTPEmailSender
 
 
 class ExportData:
@@ -133,9 +134,12 @@ class ExportData:
                     file_name)
                 with open(output_location, 'w') as file:
                     file.write(data)
-            case 'MS_EMAIL':
+            case 'MS_EMAIL' | 'EMAIL':
                 # Send via Microsoft email
-                msg = MSEmail(conf['env_key'])
+                if conf['export_type'].upper() == 'MS_EMAIL':
+                    msg = MSEmail(conf['env_key'])
+                else:
+                    msg = SMTPEmailSender(conf['env_key'])
                 msg.build_message(
                         to=conf['export_to'],
                         subject=file_name,
@@ -147,9 +151,7 @@ class ExportData:
                         attachment_name = self.__process_file_name(attach)
                         msg.add_attachment(attachment_data, attachment_name)
                 msg.send_message()
-            case "EMAIL":
-                # Send via email - SMTP
-                raise ValueError("EMAIL export type is not implemented.")
+                
             case _:
                 raise ValueError("Invalid export type for shipping package")
         return

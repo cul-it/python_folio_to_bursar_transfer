@@ -1,4 +1,5 @@
 """Python script to send emails using Microsoft Graph API with OAuth2 authentication."""
+import re
 from io import BytesIO
 from O365 import Account, FileSystemTokenBackend
 from O365.utils import AWSS3Backend
@@ -58,14 +59,9 @@ class MSEmail:
         """
         Creates a new message object.
         """
-        if ';' in to:
-            to = to.split(';')
-        elif ',' in to:
-            to = to.split(',')
-        elif ' ' in to:
-            to = to.split(' ')
-        else:
-            to = [to]
+        # pylint: disable=R0801
+        if isinstance(to, str):
+            to = re.split(r'[;, ]+', to)
 
         new_body = f"""<html><body>
                      {body.replace('\n', '<br>')}
