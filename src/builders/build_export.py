@@ -118,10 +118,6 @@ class ExportData:
                 # Upload to S3 bucket
                 s3_uploader = S3Uploader(env_key=conf['env_key'])
                 s3_uploader.upload_file_from_string(data, file_name)
-            case 'S3_SECURE':
-                # Upload to S3 bucket using a secure connection
-                s3_uploader = S3Uploader(env_key=conf['env_key'], secure=True)
-                s3_uploader.upload_file_from_string(data, file_name)
             case 'FTP':
                 # Upload to FTP server
                 sftp = SftpUploader(env_key=conf['env_key'])

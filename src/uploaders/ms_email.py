@@ -31,17 +31,19 @@ class MSEmail:
                     token_path=EnvLoader().get(name=f"{env_key}_AUTH_PATH"),
                     token_filename=f"{env_key}_TOKEN.json"
                 )
-            case 'S3_SECURE':
-                # AWS certificate from S3
-                token_backend = CustomAwsS3Backend(
-                    env_key=EnvLoader().get(name=f"{env_key}_AUTH_PATH"),
-                    filename='f"{env_key}_TOKEN.json'
-                )
             case 'S3':
-                token_backend = AWSS3Backend(
-                    bucket_name=EnvLoader().get(name=f"{env_key}_AUTH_PATH"),
-                    filename=f"{env_key}_TOKEN.json"
-                )
+                if EnvLoader().get(name=f"{env_key}_SECURE"):
+                    # AWS certificate from S3 bucket using an outside connection
+                    token_backend = CustomAwsS3Backend(
+                        env_key=EnvLoader().get(name=f"{env_key}_AUTH_PATH"),
+                        filename='f"{env_key}_TOKEN.json'
+                    )
+                else:
+                    #AWS bucket within a lambda function
+                    token_backend = AWSS3Backend(
+                        bucket_name=EnvLoader().get(name=f"{env_key}_AUTH_PATH"),
+                        filename=f"{env_key}_TOKEN.json"
+                    )
             case _:
                 raise ValueError(
                     "Invalid AUTH_LOCATION. Must be 'LOCAL' or 'AWS'.")

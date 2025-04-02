@@ -15,14 +15,14 @@ class S3Uploader:
     A class to handle file uploads to an AWS S3 bucket.
     """
 
-    def __init__(self, env_key, secure=False):
+    def __init__(self, env_key):
         """
         Initialize the S3Uploader with the bucket name and AWS credentials.
         :param __bucket_name: The name of the S3 bucket.
         """
 
         self.__bucket_name = EnvLoader().get(name=f"{env_key}_BUCKET")
-        if secure:
+        if EnvLoader().get(name=f"{env_key}_SECURE"):
             self.__s3_client = boto3.client(
                 "s3",
                 aws_access_key_id=EnvLoader().get(name=f"{env_key}_ACCESS_KEY_ID"),
