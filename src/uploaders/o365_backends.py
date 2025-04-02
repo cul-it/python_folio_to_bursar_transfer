@@ -3,9 +3,9 @@
 # Skipping lint as this fiel is based of the O365 library
 import os
 import boto3
-from O365.utils import BaseTokenBackend
 import logging
-from dotenv import load_dotenv
+from O365.utils import BaseTokenBackend
+from src.utilities.env import EnvLoader
 
 # Configure logging
 log = logging.getLogger(__name__)
@@ -19,17 +19,15 @@ class CustomAwsS3Backend(BaseTokenBackend):
         Init Backend
         :param str filename: Name of the S3 bucket
         """
-        # Load environment variables from the .env file
-        load_dotenv()
 
         super().__init__()
-        self._bucket_name = os.getenv(f"{env_key}_BUCKET")
+        self._bucket_name = EnvLoader().get(name=f"{env_key}_BUCKET")
         self.filename = filename
         self._client = boto3.client(
             "s3",
-            aws_access_key_id=os.getenv(f"{env_key}_ACCESS_KEY_ID"),
-            aws_secret_access_key=os.getenv(f"{env_key}_SECRET_ACCESS_KEY"),
-            region_name=os.getenv(f"{env_key}_REGION", "us-east-1")
+            aws_access_key_id=EnvLoader().get(name=f"{env_key}_ACCESS_KEY_ID"),
+            aws_secret_access_key=EnvLoader().get(name=f"{env_key}_SECRET_ACCESS_KEY"),
+            region_name=EnvLoader().get(name=f"{env_key}_REGION", default="us-east-1")
         )
 
     def __repr__(self):

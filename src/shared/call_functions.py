@@ -3,10 +3,8 @@
     This script is used to call the FOLIO API. It is used to get
     the auth token and to make requests to the FOLIO API.
 """
-import os
 import requests
-from dotenv import load_dotenv
-load_dotenv()
+from src.utilities.env import EnvLoader
 
 
 
@@ -28,9 +26,9 @@ class CallFunctions:
 
     def __init__(self, job):
         self.run_env = job['run_env'].upper()
-        self.__baseurl = os.getenv(f'{self.run_env}_BASE_URL')
+        self.__baseurl = EnvLoader().get(name=f'{self.run_env}_BASE_URL')
         self.__headers = {
-            "x-okapi-tenant": os.getenv(f'{self.run_env}_FOLIO_TENANT'),
+            "x-okapi-tenant": EnvLoader().get(name=f'{self.run_env}_FOLIO_TENANT'),
             "Content-Type": "application/json"
         }
         cookies = self.__login()
@@ -46,8 +44,8 @@ class CallFunctions:
         """
         url = f"{self.__baseurl}/authn/login-with-expiry"
         data = {
-            "username": os.getenv(f'{self.run_env}_USER_NAME'),
-            "password": os.getenv(f'{self.run_env}_USER_PASSWORD'),
+            "username": EnvLoader().get(name=f'{self.run_env}_USER_NAME'),
+            "password": EnvLoader().get(name=f'{self.run_env}_USER_PASSWORD'),
         }
 
         # Send the request for a new token and send the request token back for future requests.

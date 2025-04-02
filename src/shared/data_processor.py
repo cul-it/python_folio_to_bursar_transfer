@@ -4,6 +4,7 @@ It is used to filter, update, and merge data from the data sets.
 """
 import json
 import os
+from src.utilities.env import EnvLoader
 
 
 class DataProcessor:
@@ -87,7 +88,7 @@ class DataProcessor:
                         settings['filter_value'],
                         str) and settings['filter_value'].startswith('ENV'):
                     tmp = settings['filter_value'].split('|')
-                    filter_value = os.getenv(tmp[1])
+                    filter_value = EnvLoader().get(name=tmp[1])
                 else:
                     filter_value = settings['filter_value']
                 match  settings['filter_operator'].upper():

@@ -3,12 +3,11 @@ AWS S3 Uploader Class
 This class provides methods to upload files to an AWS S3 bucket.
 It supports uploading files from a string or a local file path.
 """
-import os
 import tempfile
 import io
 import boto3
 from botocore.exceptions import NoCredentialsError, PartialCredentialsError
-from dotenv import load_dotenv
+from src.utilities.env import EnvLoader
 
 
 class S3Uploader:
@@ -21,16 +20,14 @@ class S3Uploader:
         Initialize the S3Uploader with the bucket name and AWS credentials.
         :param __bucket_name: The name of the S3 bucket.
         """
-        # Load environment variables from the .env file
-        load_dotenv()
 
-        self.__bucket_name = os.getenv(f"{env_key}_BUCKET")
+        self.__bucket_name = EnvLoader().get(name=f"{env_key}_BUCKET")
         if secure:
             self.__s3_client = boto3.client(
                 "s3",
-                aws_access_key_id=os.getenv(f"{env_key}_ACCESS_KEY_ID"),
-                aws_secret_access_key=os.getenv(f"{env_key}_SECRET_ACCESS_KEY"),
-                region_name=os.getenv(f"{env_key}_REGION", "us-east-1")
+                aws_access_key_id=EnvLoader().get(name=f"{env_key}_ACCESS_KEY_ID"),
+                aws_secret_access_key=EnvLoader().get(name=f"{env_key}_SECRET_ACCESS_KEY"),
+                region_name=EnvLoader().get(name=f"{env_key}_REGION", default="us-east-1")
             )
         else:
             self.__s3_client = boto3.client("s3")

@@ -2,6 +2,7 @@
 import json
 import os
 from src.shared.data_processor import DataProcessor  # Import the new class
+from src.utilities.env import EnvLoader
 
 
 class ProcessFines:
@@ -34,7 +35,7 @@ class ProcessFines:
                 if 'filters' in config and config["filters"] and len(
                         config["filters"]) > 0:
                     for f in config["filters"]:
-                        filter = json.loads(os.getenv(f))
+                        filter = json.loads(EnvLoader().get(name=f))
                         working_fines = self.__data_processor.general_filter_function(
                             working_fines, filter)
                 working_fines = self.__process_fine(

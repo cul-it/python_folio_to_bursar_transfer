@@ -1,10 +1,9 @@
 """Python script to send emails using Microsoft Graph API with OAuth2 authentication."""
-import os
 from io import BytesIO
-from dotenv import load_dotenv
 from O365 import Account, FileSystemTokenBackend
 from O365.utils import AWSS3Backend
 from src.uploaders.o365_backends import CustomAwsS3Backend
+from src.utilities.env import EnvLoader
 
 
 
@@ -17,31 +16,29 @@ class MSEmail:
         """
         Initializes the MSEmail class with client ID, client secret, and tenant ID.
         """
-        # Load environment variables from the .env file
-        load_dotenv()
 
         credentials = (
-            os.getenv(
-                f"{env_key}_CLIENT_ID"), os.getenv(
+            EnvLoader().get(name=
+                f"{env_key}_CLIENT_ID"), EnvLoader().get(name=
                 f"{env_key}_CERTIFICATE_VALUE"))
 
-        match os.getenv(f"{env_key}_AUTH_LOCATION").upper():
+        match EnvLoader().get(name=f"{env_key}_AUTH_LOCATION").upper():
             case 'LOCAL':
                 print('Loading local credentials...')
                 # Local certificate from the local file system
                 token_backend = FileSystemTokenBackend(
-                    token_path=os.getenv(f"{env_key}_AUTH_PATH"),
+                    token_path=EnvLoader().get(name=f"{env_key}_AUTH_PATH"),
                     token_filename=f"{env_key}_TOKEN.json"
                 )
             case 'S3_SECURE':
                 # AWS certificate from S3
                 token_backend = CustomAwsS3Backend(
-                    env_key=os.getenv(f"{env_key}_AUTH_PATH"),
+                    env_key=EnvLoader().get(name=f"{env_key}_AUTH_PATH"),
                     filename='f"{env_key}_TOKEN.json'
                 )
             case 'S3':
                 token_backend = AWSS3Backend(
-                    bucket_name=os.getenv(f"{env_key}_AUTH_PATH"),
+                    bucket_name=EnvLoader().get(name=f"{env_key}_AUTH_PATH"),
                     filename=f"{env_key}_TOKEN.json"
                 )
             case _:
