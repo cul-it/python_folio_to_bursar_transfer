@@ -9,6 +9,7 @@ from src.uploaders.aws_bucket import S3Uploader
 from src.uploaders.sfpt import SftpUploader
 from src.uploaders.ms_email import MSEmail
 from src.uploaders.smtp_email import SMTPEmailSender
+from src.utilities.env_loader import EnvLoader
 
 
 class ExportData:
@@ -130,9 +131,9 @@ class ExportData:
                     file_name)
                 with open(output_location, 'w') as file:
                     file.write(data)
-            case 'MS_EMAIL' | 'EMAIL':
+            case 'EMAIL':
                 # Send via Microsoft email
-                if conf['export_type'].upper() == 'MS_EMAIL':
+                if EnvLoader().get(name=f"{conf['env_key']}_EMAIL_TYPE").upper() == 'MICROSOFT':
                     msg = MSEmail(conf['env_key'])
                 else:
                     msg = SMTPEmailSender(conf['env_key'])

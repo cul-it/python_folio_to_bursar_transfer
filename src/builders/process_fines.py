@@ -2,7 +2,7 @@
 import json
 import os
 from src.shared.data_processor import DataProcessor  # Import the new class
-from src.utilities.env import EnvLoader
+from src.utilities.env_loader import EnvLoader
 
 
 class ProcessFines:

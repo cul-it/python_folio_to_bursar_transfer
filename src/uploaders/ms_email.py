@@ -4,7 +4,7 @@ from io import BytesIO
 from O365 import Account, FileSystemTokenBackend
 from O365.utils import AWSS3Backend
 from src.uploaders.o365_backends import CustomAwsS3Backend
-from src.utilities.env import EnvLoader
+from src.utilities.env_loader import EnvLoader
 
 
 
