@@ -29,8 +29,7 @@ class JobProcessor:
 
         # Get the jobs configuration file
         loader = YamlLoader()
-        job_file = os.path.join('config', 'jobs.yaml')
-        processed_data = loader.load_config(job_file)
+        processed_data = loader.load_config('jobs.yaml')
         for j in processed_data['jobs']:
             if self.__check_days(j) and self.__check_month(
                     j) and self.__check_day(j):
@@ -42,10 +41,8 @@ class JobProcessor:
         This is the main call function after the class has been instantiated.
         """
         for job in self.active_jobs:
-            job_config = os.path.join('config', job['job_config'])
-
             # Get the job configuration file
-            settings = YamlLoader().load_config(job_config)
+            settings = YamlLoader().load_config(job['job_config'])
 
             # set up the connector to FOLIO -- this is used by all functions to
             connector = CallFunctions(job)

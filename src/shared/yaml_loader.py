@@ -4,6 +4,8 @@ yaml_loader.py - used to load yaml files with support for includes and variable 
 import re
 import os
 import yaml
+from src.utilities.env_loader import EnvLoader
+from src.shared.file_loader import FileLoader
 
 #pylint: disable-next=too-few-public-methods
 class YamlLoader:
@@ -18,6 +20,13 @@ class YamlLoader:
             in the YAML data.
     """
     def __init__(self):
+        env = EnvLoader()
+        conf = {
+            "type": env.get(name="CONFIG_FILE_STORAGE_TYPE", default="local").upper(),
+            "connector": env.get(name="CONFIG_FILE_STORAGE_CONNECTOR", default="local").upper(),
+            "location": env.get(name="CONFIG_FILE_LOCATION", default="local")
+        }
+        self.__file_loader = FileLoader(conf)
         return
 
     def __load_yaml_with_variables(self, data, variables):
@@ -53,8 +62,7 @@ class YamlLoader:
         :param file_path: The path to the YAML file to load.
         :return: The processed YAML data as a dictionary.
         """
-        with open(file_path, "r", encoding='utf-8') as file:
-            main_data = yaml.safe_load(file)
+        main_data = self.__file_loader.load_file(file_path, is_yaml=True)
 
         # Extract variables from the main file
         global_variables = main_data.get("vars", [])
@@ -63,34 +71,29 @@ class YamlLoader:
 
         # Process included files
         if "include" in main_data and isinstance(main_data["include"], list):
-            for include_file in main_data["include"]:
-                include_path = os.path.join(
-                    os.path.dirname(file_path), include_file)
-                with open(include_path, "r", encoding='utf-8') as included_file:
-                    included_data = yaml.safe_load(included_file)
+            for include_sub_file in main_data["include"]:
+                included_data = self.__file_loader.load_file(include_sub_file, is_yaml=True)
+                # Extract variables from the included file
+                local_variables = included_data.get("vars", [])
+                all_variables = {
+                    key: value for d in global_variables + local_variables for key,
+                    value in d.items()
+                }
 
-                    # Extract variables from the included file
-                    local_variables = included_data.get("vars", [])
-                    all_variables = {
-                        key: value for d in global_variables + local_variables for key,
-                        value in d.items()
-                    }
+                # Replace variables in the included file
+                included_data = self.__load_yaml_with_variables(
+                    included_data, all_variables)
 
-                    # Replace variables in the included file
-                    included_data = self.__load_yaml_with_variables(
-                        included_data, all_variables)
+                # Remove the "vars" section from the included data after
+                # processing
+                included_data.pop("vars", None)
 
-                    # Remove the "vars" section from the included data after
-                    # processing
-                    included_data.pop("vars", None)
-
-                    # Merge the included data into the main data
-                    if isinstance(included_data, dict):
-                        main_data.update(included_data)
-                    else:
-                        raise ValueError(
-                            f"Included file {include_file} must contain a dictionary at the top level.")# pylint: disable=line-too-long
-
+                # Merge the included data into the main data
+                if isinstance(included_data, dict):
+                    main_data.update(included_data)
+                else:
+                    raise ValueError(
+                        f"Included file {include_sub_file} must contain a dictionary at the top level.")# pylint: disable=line-too-long
         # Remove the "include" key from the main data after processing
         main_data.pop("include", None)
 
