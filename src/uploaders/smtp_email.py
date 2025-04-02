@@ -9,7 +9,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
 from email import encoders
 from typing import List
-from src.utilities.env_loader import EnvLoader
+from src.shared.env_loader import EnvLoader
 
 
 class SMTPEmailSender:

@@ -7,7 +7,7 @@ import tempfile
 import io
 import boto3
 from botocore.exceptions import NoCredentialsError, PartialCredentialsError
-from src.utilities.env_loader import EnvLoader
+from src.shared.env_loader import EnvLoader
 
 
 class S3Uploader:

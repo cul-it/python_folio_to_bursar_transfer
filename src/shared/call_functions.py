@@ -4,7 +4,7 @@
     the auth token and to make requests to the FOLIO API.
 """
 import requests
-from src.utilities.env_loader import EnvLoader
+from src.shared.env_loader import EnvLoader
 
 
 

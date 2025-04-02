@@ -2,7 +2,7 @@
 yaml_loader.py - used to load yaml files with support for includes and variable substitution.
 """
 import re
-from src.utilities.env_loader import EnvLoader
+from src.shared.env_loader import EnvLoader
 from src.shared.file_loader import FileLoader
 
 #pylint: disable-next=too-few-public-methods

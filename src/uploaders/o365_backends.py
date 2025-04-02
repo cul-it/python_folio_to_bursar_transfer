@@ -5,7 +5,7 @@ import os
 import boto3
 import logging
 from O365.utils import BaseTokenBackend
-from src.utilities.env_loader import EnvLoader
+from src.shared.env_loader import EnvLoader
 
 # Configure logging
 log = logging.getLogger(__name__)

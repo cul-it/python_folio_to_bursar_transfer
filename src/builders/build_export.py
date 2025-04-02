@@ -9,7 +9,7 @@ from src.uploaders.aws_bucket import S3Uploader
 from src.uploaders.sfpt import SftpUploader
 from src.uploaders.ms_email import MSEmail
 from src.uploaders.smtp_email import SMTPEmailSender
-from src.utilities.env_loader import EnvLoader
+from src.shared.env_loader import EnvLoader
 from src.shared.file_loader import FileLoader
 
 

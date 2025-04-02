@@ -10,7 +10,7 @@ import paramiko
 # pylint: disable-next=unused-import
 from paramiko import RSAKey, Ed25519Key
 from src.uploaders.aws_bucket import S3Uploader
-from src.utilities.env_loader import EnvLoader
+from src.shared.env_loader import EnvLoader
 
 
 class SftpUploader:

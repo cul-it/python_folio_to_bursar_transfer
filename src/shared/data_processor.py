@@ -4,7 +4,7 @@ It is used to filter, update, and merge data from the data sets.
 """
 import json
 import os
-from src.utilities.env_loader import EnvLoader
+from src.shared.env_loader import EnvLoader
 
 
 class DataProcessor:
