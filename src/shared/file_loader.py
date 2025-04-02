@@ -5,7 +5,7 @@ import os
 import yaml
 from src.uploaders.aws_bucket import S3Uploader
 
-class FileLoader:
+class FileLoader: #pylint: disable=too-few-public-methods
     """
     This class is responsible for loading files from a given directory or from a S3 Bucket
     depending on the conf settings.
@@ -39,11 +39,11 @@ class FileLoader:
         :return: The loaded file.
         """
         file_path = os.path.join(self.__script_dir, self.__conf['location'], file_name)
-        with open(file_path, 'r') as file:
+        with open(file_path, 'r') as file: #pylint: disable=unspecified-encoding
             if is_yaml:
                 return yaml.safe_load(file)
             return file.read()
-    
+
     def __load_s3_file(self, file_name, is_yaml):
         """
         Load a file from an S3 bucket.
@@ -54,3 +54,5 @@ class FileLoader:
         if is_yaml:
             return yaml.safe_load(s3_uploader.download_file_as_variable(file_name))
         return s3_uploader.download_file_as_variable(file_name)
+
+# END of file_loader.py

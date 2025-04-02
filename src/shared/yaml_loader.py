@@ -2,8 +2,6 @@
 yaml_loader.py - used to load yaml files with support for includes and variable substitution.
 """
 import re
-import os
-import yaml
 from src.utilities.env_loader import EnvLoader
 from src.shared.file_loader import FileLoader
 
@@ -27,7 +25,6 @@ class YamlLoader:
             "location": env.get(name="CONFIG_FILE_LOCATION", default="local")
         }
         self.__file_loader = FileLoader(conf)
-        return
 
     def __load_yaml_with_variables(self, data, variables):
         """

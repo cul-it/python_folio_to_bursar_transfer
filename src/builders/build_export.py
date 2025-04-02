@@ -10,6 +10,7 @@ from src.uploaders.sfpt import SftpUploader
 from src.uploaders.ms_email import MSEmail
 from src.uploaders.smtp_email import SMTPEmailSender
 from src.utilities.env_loader import EnvLoader
+from src.shared.file_loader import FileLoader
 
 
 class ExportData:
@@ -23,6 +24,13 @@ class ExportData:
         """
         self.__script_dir = os.path.dirname(__file__)
         self.__working_data = working_data
+        env = EnvLoader()
+        conf = {
+            "type": env.get(name="TEMPLATE_FILE_STORAGE_TYPE", default="local").upper(),
+            "connector": env.get(name="TEMPLATE_FILE_STORAGE_CONNECTOR", default="local").upper(),
+            "location": env.get(name="TEMPLATE_FILE_LOCATION", default="local")
+        }
+        self.__file_loader = FileLoader(conf)
 
         if 'export' in settings and settings['export'] is not None:
             for conf in settings['export']:
@@ -30,13 +38,6 @@ class ExportData:
 
                 file_name = self.__process_file_name(conf)
                 self.__ship_package(conf, file_name, processed_data)
-
-                # TODO: REMOVE THIS ----------------
-                # output_file = os.path.join(
-                #     self.__script_dir, '..', 'temp', file_name)
-                # with open(output_file, 'w') as file:
-                #     file.write(processed_data)
-                # ---------------------------------
 
     def __process_file_name(self, conf):
         """
@@ -94,13 +95,10 @@ class ExportData:
             processed_data = json.dumps(template_data, indent=4)
         else:
             # Load the template file from the YAML file
-            template_path = os.path.join(
-                self.__script_dir, '..',
-                'templates', 
-                f'{conf['template_name']}.handlebars'
+            template = self.__file_loader.load_file(
+                    f'{conf['template_name']}.handlebars',
+                    is_yaml=False
                 )
-            with open(template_path, 'r', encoding='utf-8') as file:
-                template = file.read()
             # Compile the template with handlebars for processing
             compiled_template = compiler.compile(template)
             # Process the template with the data
