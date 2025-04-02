@@ -70,14 +70,20 @@ class JobProcessor:
                 "credits": refund_data,
                 "process": process_data}
             output_json = os.path.join(
-                os.path.dirname(__file__), 'temp', 'dump.json')
+                os.path.dirname(__file__), '..', 'temp', 
+                'dump.json')
             with open(output_json, 'w', encoding='utf-8') as f:
                 # Save with indentation for readability
                 json.dump(dump, f, indent=4)
             # ---------------------------------
 
             # build the export data
-            ExportData(charge_data, refund_data, process_data, settings)
+            working_data = {
+                    "charge_data": charge_data,
+                    "refund_data": refund_data,
+                    "process_data": process_data
+                }
+            ExportData(working_data, settings)
 
     def run_test_job(self, job):
         """
