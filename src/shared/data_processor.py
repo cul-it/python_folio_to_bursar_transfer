@@ -2,9 +2,10 @@
 This module is used to process data from the data sets.
 It is used to filter, update, and merge data from the data sets.
 """
-import json
-import os
+# import json
+# import os
 from src.shared.env_loader import EnvLoader
+from src.shared.file_loader import FileLoader
 
 
 class DataProcessor:
@@ -29,10 +30,16 @@ class DataProcessor:
         __flatten_array(ary : list) -> list: Flattens an array of dictionaries.
     """
 
-    def __init__(self, script_dir):
-        self.__script_dir = script_dir
+    def __init__(self):
         self.__filter_data = {}
         self.__error_data = []
+        env = EnvLoader()
+        conf = {
+            "type": env.get(name="DATA_SETS_FILE_STORAGE_TYPE", default="local").upper(),
+            "connector": env.get(name="DATA_SETS_FILE_STORAGE_CONNECTOR", default="local").upper(),
+            "location": env.get(name="DATA_SETS_FILE_LOCATION", default="local")
+        }
+        self.__file_loader = FileLoader(conf)
 
     def get_filter_data(self):
         """
@@ -66,14 +73,9 @@ class DataProcessor:
             # If load is not False then a JSON file is loaded and processed as
             # the filter.
             if settings['load']:
-                path = os.path.join(
-                    self.__script_dir, '..', 'dataSets', f"{
-                        settings['load']}.json")
-                if path:  # Check if the file exists
-                    with open(path, 'r', encoding='utf-8') as f:
-                        test_data = json.load(f)
-                else:
-                    return
+                test_data = self.__file_loader.load_file(
+                    file_name=f"{settings['load']}.json", is_json=True
+                    )
 
                 if settings['flatten']:
                     test_data = self.__flatten_array(test_data)
@@ -188,14 +190,9 @@ class DataProcessor:
                     settings["field_deliminator"]}{
                     current_dict_2[final_old_key_2]}'
         elif settings['merge_type'].upper() == "FILE":
-            path = os.path.join(
-                self.__script_dir, '..', 'dataSets',
-                    f"{settings['load']}.json")
-            if path:  # Check if the file exists
-                with open(path, 'r', encoding='utf-8') as f:
-                    merge_data = json.load(f)
-            else:
-                return
+            merge_data = self.__file_loader.load_file(
+                file_name=f"{settings['load']}.json", is_json=True
+                )
             for f in fines:
                 key_value = self.__filter_get_field_value(f, settings)
                 new_keys = settings['new_field'].split('.')

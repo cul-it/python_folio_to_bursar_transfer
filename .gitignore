@@ -185,3 +185,5 @@ refrence.md
 test_me.py
 templates/email.handlebars
 secrets/
+utilities/env_validation/
+utilities/models/

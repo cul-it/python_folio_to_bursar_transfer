@@ -24,8 +24,7 @@ class ProcessFines:
         """
         self.__script_dir = os.path.dirname(__file__)
         self.__connector = connector
-        self.__data_processor = DataProcessor(
-            self.__script_dir)  # Initialize DataProcessor
+        self.__data_processor = DataProcessor()  # Initialize DataProcessor
 
         self.return_data = {}
         if 'processors' in settings and settings["processors"] and len(

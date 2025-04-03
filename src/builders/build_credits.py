@@ -44,8 +44,7 @@ class BuildCredits:
             "rawRecordCount": 0,
         }
 
-        self.__data_processor = DataProcessor(
-            script_dir)  # Initialize DataProcessor
+        self.__data_processor = DataProcessor()  # Initialize DataProcessor
 
     def get_credits(self):
         """

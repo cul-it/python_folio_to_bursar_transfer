@@ -41,8 +41,7 @@ class BuildCharges:
             "rawRecordCount": 0,
         }
 
-        self.__data_processor = DataProcessor(
-            self.__script_dir)  # Initialize DataProcessor
+        self.__data_processor = DataProcessor()  # Initialize DataProcessor
 
     def get_charges(self):
         """
