@@ -11,6 +11,7 @@ from src.uploaders.ms_email import MSEmail
 from src.uploaders.smtp_email import SMTPEmailSender
 from src.shared.env_loader import EnvLoader
 from src.shared.file_loader import FileLoader
+from src.uploaders.slack_messanger import SlackMessenger
 
 
 class ExportData:
@@ -48,7 +49,7 @@ class ExportData:
         """
         file_name = conf['file_name']
         if conf['file_append_date']:
-            date_string = f'_{
+            date_string = f'{
                 date.today().strftime(
                     conf['date_format'])}'
             file_name = file_name.replace('{date}', date_string)
@@ -146,7 +147,20 @@ class ExportData:
                         attachment_name = self.__process_file_name(attach)
                         msg.add_attachment(attachment_data, attachment_name)
                 msg.send_message()
-                
+            case 'SLACK':
+                # Send via Slack
+                slack = SlackMessenger(env_key=conf['env_key'])        
+                slack.send_message(message=data, header=file_name)
+                if 'attachment' in conf and conf['attachment']:
+                    for attach in conf['attachment']:
+                        attachment_data = self.__process_template(attach)
+                        attachment_name = self.__process_file_name(attach)
+                        slack.upload_file(
+                            file_stream=attachment_data,
+                            title=attachment_name,
+                            comment=attach["comment"] if "comment" in attach else None
+                        )
+                        # msg.add_attachment(attachment_data, attachment_name)
             case _:
                 raise ValueError("Invalid export type for shipping package")
         return
