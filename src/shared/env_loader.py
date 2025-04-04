@@ -1,12 +1,14 @@
-# Start of the EnvLoader class
 """
 This module provides a class to load environment variables from different sources.
 """
 import os
+import logging
 from dotenv import load_dotenv
 
+logger = logging.getLogger(__name__)
 
-class EnvLoader: #pylint: disable=too-few-public-methods
+
+class EnvLoader:  # pylint: disable=too-few-public-methods
     """
     A class to load environment variables from the following sources in order:
     1. .env file (if it exists)
@@ -23,7 +25,15 @@ class EnvLoader: #pylint: disable=too-few-public-methods
 
         # Load the .env file if it exists
         if os.path.exists(self.env_file_path):
+            logger.info("Loading .env file from path: %s",
+                        self.env_file_path)
             load_dotenv(self.env_file_path)
+        else:
+            logger.warning(".env file not found at path: %s",
+                           self.env_file_path)
+        logger.info("EnvLoader initialized successfully.")
+        logger.debug("EnvLoader initialized with env_file_path: %s",
+                     self.env_file_path)
 
     def get(self, name, default=None):
         """
@@ -36,17 +46,25 @@ class EnvLoader: #pylint: disable=too-few-public-methods
         :param default: The default value to return if the variable is not found (default is None).
         :return: The value of the environment variable or the default value.
         """
+        logger.debug("Attempting to retrieve environment variable: %s", name)
+
         # Check in .env file or system environment variables
         value = os.getenv(name)
         if value is not None:
+            logger.info("Environment variable '%s' found in .env or system variables.",
+                        name)
             return value
 
         # Check in Docker environment variables
         docker_value = self._get_docker_env(name)
         if docker_value is not None:
+            logger.info("Environment variable '%s' found in Docker environment variables.",
+                        name)
             return docker_value
 
         # Return the default value if not found
+        logger.warning("Environment variable '%s' not found. Returning default value: %s",
+                       name, default)
         return default
 
     def _get_docker_env(self, name):
@@ -55,10 +73,13 @@ class EnvLoader: #pylint: disable=too-few-public-methods
         :param name: The name of the environment variable.
         :return: The value of the environment variable or None if not found.
         """
+        logger.debug("Attempting to retrieve Docker environment variable: %s",
+                     name)
         try:
             # Check if running in a Docker container by looking for
             # Docker-specific environment variables
             if not os.path.exists("/proc/1/environ"):
+                logger.debug("Not running in a Docker container. /proc/1/environ not found.")
                 return None
 
             with open("/proc/1/environ", "r", encoding="utf-8") as f:
@@ -66,12 +87,13 @@ class EnvLoader: #pylint: disable=too-few-public-methods
                 env_vars = dict(
                     line.split("=", 1) for line in env_data.split("\0") if "=" in line
                 )
+                logger.info("Docker environment variable '%s' retrieved successfully.",
+                            name)
                 return env_vars.get(name)
         except FileNotFoundError:
-            # Not running in a Docker container
+            logger.debug("Not running in a Docker container. /proc/1/environ not found.")
             return None
-        except Exception as e: #pylint: disable=broad-except
-            print(f"Error reading Docker environment variables: {e}")
+        except Exception as e:  # pylint: disable=broad-except
+            logger.error("Error reading Docker environment variables: %s",
+                         e, exc_info=True)
             return None
-
-#  End of the EnvLoader class

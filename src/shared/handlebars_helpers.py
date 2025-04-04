@@ -18,9 +18,12 @@ Usage:
     {{format_money <<FIELD>>}}
 """
 
+import logging
 from datetime import date, datetime
 
-#pylint: disable-next=unused-argument
+logger = logging.getLogger(__name__)
+
+# pylint: disable-next=unused-argument
 def left_pad(context, value, width=5, char=' '):
     """
     Left pad a value with a character to a specified width. (Required by handlebars)
@@ -30,9 +33,11 @@ def left_pad(context, value, width=5, char=' '):
     :param char: The character to pad with. :default ' '
     :return: The padded string.
     """
+    logger.info("Running left_pad with value: %s, width: %d, char: '%s'",
+                value, width, char)
     return str(value).rjust(width, char)
 
-#pylint: disable-next=unused-argument
+# pylint: disable-next=unused-argument
 def right_pad(context, value, width=5, char=' '):
     """
     Right pad a value with a character to a specified width. (Required by handlebars)
@@ -42,9 +47,11 @@ def right_pad(context, value, width=5, char=' '):
     :param char: The character to pad with. :default ' '
     :return: The padded string.
     """
+    logger.info("Running right_pad with value: %s, width: %d, char: '%s'",
+                value, width, char)
     return str(value).ljust(width, char)
 
-#pylint: disable-next=unused-argument
+# pylint: disable-next=unused-argument
 def format_date(context, value, output_format='%Y-%m-%d', import_format=False):
     """
     Format a date string to a specified format.
@@ -54,21 +61,32 @@ def format_date(context, value, output_format='%Y-%m-%d', import_format=False):
     :param import_format: The format to parse the date string. :default False
     :return: The formatted date string.
     """
+    logger.info("Running format_date with value: %s, output_format: %s, import_format: %s",
+                value, output_format, import_format)
     if value.upper() == "NOW":
         wrk_date = date.today()
+        logger.debug("Using current date: %s", wrk_date)
     elif import_format:
         try:
             wrk_date = datetime.strptime(value, import_format).date()
+            logger.debug("Parsed date with import_format: %s", wrk_date)
         except ValueError as exc:
+            logger.error("Invalid date format for value: %s with import_format: %s",
+                         value, import_format, exc_info=True)
             raise ValueError("Invalid date format") from exc
     else:
         try:
             wrk_date = datetime.fromisoformat(value).date()
+            logger.debug("Parsed date with ISO format: %s", wrk_date)
         except ValueError as exc:
+            logger.error("Invalid ISO date format for value: %s",
+                         value, exc_info=True)
             raise ValueError("Invalid date format") from exc
-    return wrk_date.strftime(output_format)
+    formatted_date = wrk_date.strftime(output_format)
+    logger.info("Formatted date: %s", formatted_date)
+    return formatted_date
 
-#pylint: disable-next=unused-argument
+# pylint: disable-next=unused-argument
 def format_money(context, value):
     """
     Format a number to a currency string with two decimal places.
@@ -76,6 +94,14 @@ def format_money(context, value):
     :param value: The number to format.
     :return: The formatted currency string.
     """
-    return f"{float(value):.2f}"
+    logger.info("Running format_money with value: %s", value)
+    try:
+        formatted_value = f"{float(value):.2f}"
+        logger.info("Formatted money value: %s", formatted_value)
+        return formatted_value
+    except ValueError:
+        logger.error("Invalid value for formatting money: %s",
+                     value, exc_info=True)
+        raise
 
 # End of src/shared/handlebars_helpers.py

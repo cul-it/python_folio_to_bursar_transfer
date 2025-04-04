@@ -3,7 +3,7 @@ This module processes the active jobs based on the configuration file.
 """
 from datetime import date
 import os
-import json
+import logging
 from calendar import monthrange
 from src.builders.process_fines import ProcessFines
 from src.shared.yaml_loader import YamlLoader
@@ -11,6 +11,8 @@ from src.shared.call_functions import CallFunctions
 from src.builders.build_charges import BuildCharges
 from src.builders.build_credits import BuildCredits
 from src.builders.build_export import ExportData
+
+logger = logging.getLogger(__name__)
 
 
 class JobProcessor:
@@ -28,59 +30,78 @@ class JobProcessor:
         self.active_jobs = []
 
         # Get the jobs configuration file
+        logger.info("Initializing JobProcessor and loading jobs configuration.")
         loader = YamlLoader()
         processed_data = loader.load_config('jobs.yaml')
         for j in processed_data['jobs']:
+            logger.debug("Processing job: %s",
+                         j.get('name', 'Unnamed Job'))
             if self.__check_days(j) and self.__check_month(
                     j) and self.__check_day(j):
                 self.active_jobs.append(j)
+        logger.info("Loaded %s active jobs.",
+                    len(self.active_jobs))
+        logger.debug("Active jobs: %s", self.active_jobs)
 
     def process_active_jobs(self):
         """
         This function processes the active jobs based on the configuration file.
         This is the main call function after the class has been instantiated.
+        :return: None
+        :raises Exception: If an error occurs during job processing.
         """
+        logger.info("Starting to process active jobs.")
         for job in self.active_jobs:
-            # Get the job configuration file
-            settings = YamlLoader().load_config(job['job_config'])
+            try:
+                logger.info("Processing job: %s",
+                            job.get('name', 'Unnamed Job'))
+                # Get the job configuration file
+                settings = YamlLoader().load_config(job['job_config'])
+                logger.debug("Job configuration: %s",
+                             settings)
 
-            # set up the connector to FOLIO -- this is used by all functions to
-            connector = CallFunctions(job)
+                # set up the connector to FOLIO -- this is used by all functions to
+                connector = CallFunctions(job)
+                logger.info("Connector initialized.")
 
-            # # build the charge data
-            charge_data = BuildCharges(connector, settings).get_charges()
+                # Build the charge data
+                logger.info("Building charge data.")
+                charge_data = BuildCharges(connector, settings).get_charges()
+                logger.debug("Charge data %s",
+                            charge_data)
 
-            # build the credit data
-            refund_data = BuildCredits(connector, settings).get_credits()
+                # Build the credit data
+                logger.info("Building credit data.")
+                refund_data = BuildCredits(connector, settings).get_credits()
+                logger.debug("Refund data %s",
+                            refund_data)
 
-            # Process the Fine data
-            trans_active = job["trans_active"] if 'trans_active' in job else False
-            process_data = ProcessFines(
-                connector,
-                charge_data["data"],
-                settings,
-                trans_active).get_process_data()
-
-            #TODO: REMOVE THIS ---------------- pylint: disable=fixme
-            dump = {
-                "charges": charge_data,
-                "credits": refund_data,
-                "process": process_data}
-            output_json = os.path.join(
-                os.path.dirname(__file__), '..', 'temp',
-                'dump.json')
-            with open(output_json, 'w', encoding='utf-8') as f:
-                # Save with indentation for readability
-                json.dump(dump, f, indent=4)
-            # ---------------------------------
-
-            # build the export data
-            working_data = {
+                # Process the Fine data
+                logger.info("Processing fine data.")
+                trans_active = job["trans_active"] if 'trans_active' in job else False
+                logger.debug("Transaction active: %s",
+                             trans_active)
+                process_data = ProcessFines(
+                    connector,
+                    charge_data["data"],
+                    settings,
+                    trans_active).get_process_data()
+                logger.debug("Process data %s",
+                            process_data)
+                # Build the export data
+                working_data = {
                     "charge_data": charge_data,
                     "refund_data": refund_data,
                     "process_data": process_data
                 }
-            ExportData(working_data, settings)
+                ExportData(working_data, settings)
+                logger.info("Job %s processed successfully.",
+                    job.get('name', 'Unnamed Test Job'))
+            except Exception as e: #pylint: disable=broad-except
+                logger.error("Error processing job '%s': %s",
+                             job.get('name', 'Unnamed Job'), e,
+                             exc_info=True)
+                raise e
 
     def run_test_job(self, job):
         """
@@ -88,42 +109,50 @@ class JobProcessor:
         It is used
         for testing purposes and is not intended for production use.
         :param job: The job configuration dictionary.
+        :return: None
+        :raises Exception: If an error occurs during job processing.
         """
-        job_config = os.path.join('config', job['job_config'])
+        logger.info("Running test job: %s",
+                    job.get('name', 'Unnamed Test Job'))
+        try:
+            job_config = os.path.join('config', job['job_config'])
 
-        # Get the job configuration file
-        settings = YamlLoader().load_config(job_config)
+            # Get the job configuration file
+            settings = YamlLoader().load_config(job_config)
 
-        # set up the connector to FOLIO -- this is used by all functions to
-        connector = CallFunctions(job)
+            # set up the connector to FOLIO -- this is used by all functions to
+            connector = CallFunctions(job)
 
-        # # build the charge data
-        charge_data = BuildCharges(connector, settings).get_charges()
+            # Build the charge data
+            charge_data = BuildCharges(connector, settings).get_charges()
+            logger.debug("Charge data: %s",charge_data)
 
-        # build the credit data
-        refund_data = BuildCredits(connector, settings).get_credits()
+            # Build the credit data
+            refund_data = BuildCredits(connector, settings).get_credits()
+            logger.debug("Refund data: %s",refund_data)
 
-        # Process the Fine data
-        process_data = ProcessFines(
-            connector,
-            charge_data["data"],
-            settings,
-            False).get_process_data()
+            # Process the Fine data
+            process_data = ProcessFines(
+                connector,
+                charge_data["data"],
+                settings,
+                False).get_process_data()
+            logger.debug("Process data: %s",process_data)
 
-        #TODO: REMOVE THIS ---------------- pylint: disable=fixme
-        working_data = {
-            "charge_data": charge_data,
-            "refund_data": refund_data,
-            "process_data": process_data}
-        output_json = os.path.join(
-            os.path.dirname(__file__), 'temp', 'dump.json')
-        with open(output_json, 'w', encoding='utf-8') as f:
-            # Save with indentation for readability
-            json.dump(working_data, f, indent=4)
-        # ---------------------------------
-
-        # build the export data
-        ExportData(working_data, settings)
+            # Build the export data
+            working_data = {
+                "charge_data": charge_data,
+                "refund_data": refund_data,
+                "process_data": process_data
+            }
+            ExportData(working_data, settings)
+            logger.info("Job %s processed successfully.",
+                job.get('name', 'Unnamed Test Job'))
+        except Exception as e: #pylint: disable=broad-except
+            logger.error("Error processing job '%s': %s",
+                            job.get('name', 'Unnamed Job'), e,
+                            exc_info=True)
+            raise e
 
     def __check_days(self, job):
         """
@@ -136,7 +165,11 @@ class JobProcessor:
         Available options are:
         - A list of integers representing the days (0-6) when the job should run.
         """
+        logger.debug("Checking run days for job: %s",
+                     job.get('name', 'Unnamed Job'))
         rtn_check = False
+        logger.debug("Job run days: %s",
+                     job.get('run_days', 'No run days specified'))
         if 'run_days' in job and job['run_days'] is not None and job['run_days'] != '':
             today = date.today()
             check_days = int(today.strftime("%w"))
@@ -144,6 +177,7 @@ class JobProcessor:
                 rtn_check = True
         else:
             rtn_check = True
+        logger.debug("Job run days check result: %s", rtn_check)
         return rtn_check
 
     def __check_month(self, job):
@@ -161,7 +195,11 @@ class JobProcessor:
         - 'EVEN': The job runs on even months (2, 4, 6, 8, 10, 12).
         - A list of integers representing the months (1-12) when the job should run.
         """
+        logger.debug("Checking run months for job: %s",
+                     job.get('name', 'Unnamed Job'))
         rtn_check = False
+        logger.debug("Job run months: %s",
+                     job.get('run_on_month', 'No run months specified'))
         if 'run_on_month' in job and job['run_on_month'] is not None and job['run_on_month'] != '':
             today = date.today()
             check_month = int(today.strftime("%m"))
@@ -169,6 +207,8 @@ class JobProcessor:
                 raise ValueError(
                     "Invalid type for 'run_on_month'. Expected list or string.")
             if isinstance(job['run_on_month'], str):
+                logger.debug("Job run month string: %s",
+                             job['run_on_month'])
                 match job['run_on_month'].upper():
                     case 'EVERY':
                         rtn_check = True
@@ -185,6 +225,7 @@ class JobProcessor:
                     rtn_check = True
         else:
             rtn_check = True
+        logger.debug("Job run months check result: %s", rtn_check)
         return rtn_check
 
     def __check_day(self, job):
@@ -205,14 +246,23 @@ class JobProcessor:
         - 'WEEKEND': The job runs on weekends (Saturday and Sunday).
         - A list of integers representing the days (1-31) when the job should run.
         """
+        logger.debug("Checking run days of the month for job: %s",
+                     job.get('name', 'Unnamed Job'))
         rtn_check = False
+        logger.debug("Job run days of the month: %s",
+                     job.get('run_on_day', 'No run days specified'))
         if 'run_on_day' in job and job['run_on_day'] is not None and job['run_on_day'] != '':
             today = date.today()
             check_day = int(today.strftime("%d"))
             if not isinstance(job['run_on_day'], (list, str)):
+                logger.error("Invalid type for 'run_on_day'. Expected list or string.")
+                logger.debug("Job run days of the month: %s",
+                             job.get('run_on_day', 'No run days specified'))
                 raise ValueError(
                     "Invalid type for 'run_on_day'. Expected list or string.")
             if isinstance(job['run_on_day'], str):
+                logger.debug("Job run day string: %s",
+                             job['run_on_day'])
                 match job['run_on_day'].upper():
                     case 'EVERY':
                         rtn_check = True
@@ -242,5 +292,7 @@ class JobProcessor:
                     rtn_check = True
         else:
             rtn_check = True
+        logger.debug("Job run days of the month check result: %s",
+                     rtn_check)
         return rtn_check
 # End of src/job_processor.py
