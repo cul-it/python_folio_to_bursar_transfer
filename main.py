@@ -1,6 +1,5 @@
 
 import logging
-import sys
 import time
 from src.job_processor import JobProcessor
 

@@ -187,3 +187,5 @@ templates/email.handlebars
 secrets/
 utilities/env_validation/
 utilities/models/
+utilities/faker/
+lambda_package.zip
