@@ -26,7 +26,7 @@ class YamlLoader:
         conf = {
             "type": env.get(name="CONFIG_FILE_STORAGE_TYPE", default="local").upper(),
             "connector": env.get(name="CONFIG_FILE_STORAGE_CONNECTOR", default="local").upper(),
-            "location": env.get(name="CONFIG_FILE_LOCATION", default="local")
+            "location": env.get(name="CONFIG_FILE_LOCATION")
         }
         self.__file_loader = FileLoader(conf)
         logger.info("YamlLoader initialized with configuration: %s", conf)

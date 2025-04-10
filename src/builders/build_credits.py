@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import os
 import logging
-import sys
+import json
 from datetime import date, timedelta
 from src.shared.data_processor import DataProcessor  # Import the new class
 
@@ -97,6 +97,8 @@ exposed methods:
         # Merge patron data into the Fee fine data
         self.__filter_data['rawRecordCount'] = len(credit_data)
         logger.info("Raw record count: %d", self.__filter_data['rawRecordCount'])
+        logger.debug("Credit data: %s", json.dumps(credit_data, indent=4))
+        logger.info("Credit data retrieval complete.")
 
         if 'formatters' in self.__settings and 'credit_formatters' in self.__settings[
                 'formatters']:
@@ -111,10 +113,15 @@ exposed methods:
                     credit_data, config)
                 logger.debug("Applied merger: %s", config)
 
+        logger.debug("Credit data after formatters and merges: %s", 
+                    json.dumps(credit_data, indent=4))
+
         if 'filters' in self.__settings and 'credit_filters' in self.__settings['filters']:
             for config in self.__settings['filters']['credit_filters']:
                 credit_data = self.__data_processor.general_filter_function(
                     credit_data, config)
+                logger.debug("Credit data after filter %s: %s", 
+                            config["name"], json.dumps(credit_data, indent=4))
                 logger.debug("Applied filter: %s", config)
 
         self.__filter_data.update(self.__data_processor.get_filter_data())
@@ -147,13 +154,13 @@ exposed methods:
         credit_days_outstanding = self.__settings[
             "credit_days_outstanding"] if self.__settings["credit_days_outstanding"] else 1
         cur_date = date.today()
-        min_age = cur_date - timedelta(days=int(credit_days_outstanding))
-        max_age = cur_date - timedelta(days=1)
+        start_age = cur_date - timedelta(days=int(credit_days_outstanding))
+        end_age = cur_date - timedelta(days=1)
         date_format = '%Y-%m-%d'
         url = '/feefine-reports/refund'
         body = {
-            "startDate": min_age.strftime(date_format),
-            "endDate": max_age.strftime(date_format),
+            "startDate": start_age.strftime(date_format),
+            "endDate": end_age.strftime(date_format),
             "feeFineOwners": []
         }
         logger.debug("Generated URL and body for outstanding credits: %s, %s", url, body)
