@@ -27,14 +27,15 @@ class S3Uploader:
         self.__bucket_name = EnvLoader().get(name=f"{env_key}_BUCKET")
         if EnvLoader().get(name=f"{env_key}_SECURE"):
             self.__s3_client = boto3.client(
-                "s3",
-                aws_access_key_id=EnvLoader().get(name=f"{env_key}_ACCESS_KEY_ID"),
-                aws_secret_access_key=EnvLoader().get(name=f"{env_key}_SECRET_ACCESS_KEY"),
-                region_name=EnvLoader().get(name=f"{env_key}_REGION", default="us-east-1")
-            )
+                "s3", aws_access_key_id=EnvLoader().get(
+                    name=f"{env_key}_ACCESS_KEY_ID"), aws_secret_access_key=EnvLoader().get(
+                    name=f"{env_key}_SECRET_ACCESS_KEY"), region_name=EnvLoader().get(
+                    name=f"{env_key}_REGION", default="us-east-1"))
         else:
             self.__s3_client = boto3.client("s3")
-        logger.info("S3Uploader initialized for bucket: %s", self.__bucket_name)
+        logger.info(
+            "S3Uploader initialized for bucket: %s",
+            self.__bucket_name)
 
     def upload_file_from_string(self, file_content, s3_key):
         """
@@ -54,17 +55,20 @@ class S3Uploader:
             return s3_url
         except NoCredentialsError as exc:
             logger.error("AWS credentials not found.", exc_info=True)
-            #pylint: disable-next=too-many-function-args
+            # pylint: disable-next=too-many-function-args
             raise NoCredentialsError(
                 "Error: AWS credentials not found.") from exc
         except PartialCredentialsError as exc:
             logger.error("Incomplete AWS credentials.", exc_info=True)
-            #pylint: disable-next=too-many-function-args
+            # pylint: disable-next=too-many-function-args
             raise PartialCredentialsError(
                 "Incomplete AWS credentials.") from exc
         except Exception as e:
-            logger.error("An error occurred while uploading the file: %s", e, exc_info=True)
-            #pylint: disable-next=too-many-function-args
+            logger.error(
+                "An error occurred while uploading the file: %s",
+                e,
+                exc_info=True)
+            # pylint: disable-next=too-many-function-args
             raise RuntimeError(f"An error occurred: {e}") from e
 
     def upload_file(self, file_path, s3_key):
@@ -74,7 +78,10 @@ class S3Uploader:
         :param s3_key: The key (path) in the S3 bucket where the file will be stored.
         :return: The S3 URL of the uploaded file.
         """
-        logger.info("Uploading file to S3 from path: %s with key: %s", file_path, s3_key)
+        logger.info(
+            "Uploading file to S3 from path: %s with key: %s",
+            file_path,
+            s3_key)
         try:
             self.__s3_client.upload_file(file_path, self.__bucket_name, s3_key)
             s3_url = f"https://{self.__bucket_name}.s3.amazonaws.com/{s3_key}"
@@ -86,7 +93,7 @@ class S3Uploader:
                 f"Error: The file {file_path} was not found.") from exc
         except NoCredentialsError as exc:
             logger.error("AWS credentials not found.", exc_info=True)
-            #pylint: disable-next=too-many-function-args
+            # pylint: disable-next=too-many-function-args
             raise NoCredentialsError(
                 "Error: AWS credentials not found.") from exc
         except PartialCredentialsError as exc:
@@ -94,7 +101,10 @@ class S3Uploader:
             raise PartialCredentialsError(
                 "Error: Incomplete AWS credentials.") from exc
         except Exception as e:
-            logger.error("An error occurred while uploading the file: %s", e, exc_info=True)
+            logger.error(
+                "An error occurred while uploading the file: %s",
+                e,
+                exc_info=True)
             raise RuntimeError(f"An error occurred: {e}") from e
 
     def list_files(self):
@@ -113,7 +123,10 @@ class S3Uploader:
             logger.info("No files found in the bucket.")
             return []
         except Exception as e:
-            logger.error("An error occurred while listing files: %s", e, exc_info=True)
+            logger.error(
+                "An error occurred while listing files: %s",
+                e,
+                exc_info=True)
             raise RuntimeError(
                 f"An error occurred while listing files: {e}") from e
 
@@ -129,7 +142,10 @@ class S3Uploader:
             logger.info("File deleted successfully: %s", s3_key)
             return {"message": f"File {s3_key} deleted successfully."}
         except Exception as e:
-            logger.error("An error occurred while deleting the file: %s", e, exc_info=True)
+            logger.error(
+                "An error occurred while deleting the file: %s",
+                e,
+                exc_info=True)
             raise RuntimeError(
                 f"An error occurred while deleting the file: {e}") from e
 
@@ -139,7 +155,9 @@ class S3Uploader:
         :param s3_key: The key (path) of the file in the S3 bucket.
         :return: The path to the temporary file.
         """
-        logger.info("Downloading file from S3 to temporary location with key: %s", s3_key)
+        logger.info(
+            "Downloading file from S3 to temporary location with key: %s",
+            s3_key)
         try:
             with tempfile.NamedTemporaryFile(delete=False) as temp_file:
                 temp_file.write(b"")
@@ -147,10 +165,15 @@ class S3Uploader:
             temp_file.close()
             self.__s3_client.download_file(
                 self.__bucket_name, s3_key, temp_file_path)
-            logger.info("File downloaded successfully to temporary location: %s", temp_file_path)
+            logger.info(
+                "File downloaded successfully to temporary location: %s",
+                temp_file_path)
             return temp_file_path
         except Exception as e:
-            logger.error("An error occurred while downloading the file: %s", e, exc_info=True)
+            logger.error(
+                "An error occurred while downloading the file: %s",
+                e,
+                exc_info=True)
             raise RuntimeError(
                 f"An error occurred while downloading the file: {e}") from e
 
@@ -160,7 +183,9 @@ class S3Uploader:
         :param s3_key: The key (path) of the file in the S3 bucket.
         :return: The content of the file as a string.
         """
-        logger.info("Downloading file from S3 as variable with key: %s", s3_key)
+        logger.info(
+            "Downloading file from S3 as variable with key: %s",
+            s3_key)
         try:
             file_obj = io.BytesIO()
             self.__s3_client.download_fileobj(
@@ -170,7 +195,10 @@ class S3Uploader:
             logger.info("File downloaded successfully as variable.")
             return file_content
         except Exception as e:
-            logger.error("An error occurred while downloading the file: %s", e, exc_info=True)
+            logger.error(
+                "An error occurred while downloading the file: %s",
+                e,
+                exc_info=True)
             raise RuntimeError(
                 f"An error occurred while downloading the file: {e}") from e
 

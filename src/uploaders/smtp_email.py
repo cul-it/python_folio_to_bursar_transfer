@@ -1,5 +1,5 @@
 """
-This module provides a class to send emails via SMTP with support for 
+This module provides a class to send emails via SMTP with support for
 secure and insecure connections,
 """
 import re
@@ -24,7 +24,7 @@ class SMTPEmailSender:
     def __init__(self, env_key):
         """
         Initialize the SMTPEmailSender class.
-        :param env_key: The environment key for loading SMTP configuration 
+        :param env_key: The environment key for loading SMTP configuration
             from environment variables.
         :return: None
         """
@@ -35,7 +35,8 @@ class SMTPEmailSender:
         self.__password = EnvLoader().get(name=f"{env_key}_PASSWORD")
         self.__use_tls = EnvLoader().get(name=f"{env_key}_TLS")
         self.__message = MIMEMultipart()
-        self.__message["From"] = EnvLoader().get(name=f"{env_key}_DEFAULT_FROM")
+        self.__message["From"] = EnvLoader().get(
+            name=f"{env_key}_DEFAULT_FROM")
         logger.info("SMTPEmailSender initialized with server: %s, port: %s",
                     self.__smtp_server, self.__port)
 

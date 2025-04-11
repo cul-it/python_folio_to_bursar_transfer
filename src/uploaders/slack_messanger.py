@@ -1,8 +1,8 @@
 """
 Model to send messages and files to a Slack channel.
-This module uses the Slack SDK to send messages and upload files to a specified 
+This module uses the Slack SDK to send messages and upload files to a specified
 Slack channel.
-It is initialized with the environment key to retrieve the necessary credentials 
+It is initialized with the environment key to retrieve the necessary credentials
 and channel information.
 """
 import logging
@@ -16,6 +16,7 @@ class SlackMessenger:
     """
     This class is responsible for sending messages to a Slack channel.
     """
+
     def __init__(self, env_key):
         """
         Initialize the SlackMessenger class.
@@ -27,7 +28,9 @@ class SlackMessenger:
         # Retrieve environment variables
         self.__channel = env.get(name=f"{env_key}_CHANNEL")
         self.__client = WebClient(token=env.get(name=f"{env_key}_TOKEN"))
-        logger.info("SlackMessenger initialized for channel: %s", self.__channel)
+        logger.info(
+            "SlackMessenger initialized for channel: %s",
+            self.__channel)
 
     def send_message(self, message=None, header=None):
         """
@@ -58,9 +61,14 @@ class SlackMessenger:
                 text=message,
                 blocks=blocks
             )
-            logger.info("Message sent successfully: %s", response["message"]["text"])
+            logger.info(
+                "Message sent successfully: %s",
+                response["message"]["text"])
         except Exception as e:
-            logger.error("Failed to send message to Slack: %s", e, exc_info=True)
+            logger.error(
+                "Failed to send message to Slack: %s",
+                e,
+                exc_info=True)
             raise
 
     def upload_file(self, file_stream, title, comment=None):
@@ -69,7 +77,10 @@ class SlackMessenger:
         :param file_stream: The file stream to upload.
         :param title: The title of the file.
         """
-        logger.info("Uploading file to Slack channel: %s with title: %s", self.__channel, title)
+        logger.info(
+            "Uploading file to Slack channel: %s with title: %s",
+            self.__channel,
+            title)
         try:
             response = self.__client.files_upload_v2(
                 filename=title,
@@ -78,8 +89,13 @@ class SlackMessenger:
                 channel=self.__channel,
                 initial_comment=comment,
             )
-            logger.info("File uploaded successfully: %s", response["file"]["name"])
+            logger.info(
+                "File uploaded successfully: %s",
+                response["file"]["name"])
         except Exception as e:
-            logger.error("Failed to upload file to Slack: %s", e, exc_info=True)
+            logger.error(
+                "Failed to upload file to Slack: %s",
+                e,
+                exc_info=True)
             raise
 # End of class

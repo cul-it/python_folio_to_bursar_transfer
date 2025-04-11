@@ -40,14 +40,17 @@ class MSEmail:
                         filename=f"{env_key}_TOKEN.json"
                     )
                 else:
-                    logger.info("Loading AWS credentials from Lambda function.")
+                    logger.info(
+                        "Loading AWS credentials from Lambda function.")
                     token_backend = AWSS3Backend(
-                        bucket_name=EnvLoader().get(name=f"{env_key}_AUTH_PATH"),
-                        filename=f"{env_key}_TOKEN.json"
-                    )
+                        bucket_name=EnvLoader().get(
+                            name=f"{env_key}_AUTH_PATH"),
+                        filename=f"{env_key}_TOKEN.json")
             case _:
-                logger.error("Invalid AUTH_LOCATION. Must be 'LOCAL' or 'AWS'.")
-                raise ValueError("Invalid AUTH_LOCATION. Must be 'LOCAL' or 'AWS'.")
+                logger.error(
+                    "Invalid AUTH_LOCATION. Must be 'LOCAL' or 'AWS'.")
+                raise ValueError(
+                    "Invalid AUTH_LOCATION. Must be 'LOCAL' or 'AWS'.")
 
 # Initialize the account with the credentials and token backend
         # the default protocol will be Microsoft Graph

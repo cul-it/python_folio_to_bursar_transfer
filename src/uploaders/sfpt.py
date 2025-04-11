@@ -36,14 +36,16 @@ class SftpUploader:
         self.__ssh_client = paramiko.SSHClient()
 
         # See if the user wants to use a private key or password
-        if EnvLoader().get(name=f"{env_key}_PASSWORD").upper() == 'CERTIFICATE':
+        if EnvLoader().get(
+                name=f"{env_key}_PASSWORD").upper() == 'CERTIFICATE':
             logger.info("Using certificate for authentication.")
-            if EnvLoader().get(name=f"{env_key}_CERTIFICATE_LOCATION").upper() == 'LOCAL':
+            if EnvLoader().get(
+                    name=f"{env_key}_CERTIFICATE_LOCATION").upper() == 'LOCAL':
                 logger.info("Loading certificate from local file system.")
                 with open(
-                        EnvLoader().get(name=f"{env_key}_CERTIFICATE_PATH"),
-                        'r', encoding='utf-8'
-                    ) as file:
+                    EnvLoader().get(name=f"{env_key}_CERTIFICATE_PATH"),
+                    'r', encoding='utf-8'
+                ) as file:
                     certificate = file.read()
             elif 'AWS' in EnvLoader().get(name=f"{env_key}_CERTIFICATE_LOCATION").upper():
                 logger.info("Loading certificate from AWS S3.")
@@ -70,17 +72,18 @@ class SftpUploader:
         else:
             logger.info("Loading known_hosts file.")
             known_hosts = None
-            if EnvLoader().get(name=f"{env_key}_KNOW_HOSTS_LOCATION").upper() == 'LOCAL':
+            if EnvLoader().get(
+                    name=f"{env_key}_KNOW_HOSTS_LOCATION").upper() == 'LOCAL':
                 logger.info("Loading known_hosts from local file system.")
                 with open(EnvLoader().get(
-                        name=f"{env_key}_KNOW_HOSTS_PATH"),
-                        'r', encoding='utf-8'
-                    ) as file:
+                    name=f"{env_key}_KNOW_HOSTS_PATH"),
+                    'r', encoding='utf-8'
+                ) as file:
                     known_hosts = file.read()
             elif 'AWS' in EnvLoader().get(name=f"{env_key}_KNOW_HOSTS_LOCATION").upper():
                 logger.info("Loading known_hosts from AWS S3.")
-                s3_uploader = S3Uploader(
-                    EnvLoader().get(name=f"{env_key}_KNOW_HOSTS_LOCATION").upper())
+                s3_uploader = S3Uploader(EnvLoader().get(
+                    name=f"{env_key}_KNOW_HOSTS_LOCATION").upper())
                 known_hosts = s3_uploader.download_file_as_variable(
                     EnvLoader().get(name=f"{env_key}_KNOW_HOSTS_PATH")
                 )
@@ -106,7 +109,8 @@ class SftpUploader:
                 paramiko.RejectPolicy())
 
         # Create a connection to the SFTP server
-        if EnvLoader().get(name=f"{env_key}_PASSWORD").upper() == 'CERTIFICATE':
+        if EnvLoader().get(
+                name=f"{env_key}_PASSWORD").upper() == 'CERTIFICATE':
             logger.info("Connecting to SFTP server using certificate.")
             self.__ssh_client.connect(
                 hostname=EnvLoader().get(name=f"{env_key}_HOST"),
@@ -152,7 +156,10 @@ class SftpUploader:
             self.__ssh_client.close()
             logger.info("SFTP session and SSH client closed successfully.")
         except Exception as e:
-            logger.error("Failed to close SFTP session or SSH client: %s", e, exc_info=True)
+            logger.error(
+                "Failed to close SFTP session or SSH client: %s",
+                e,
+                exc_info=True)
             raise
         return True
 # End of the SftpUploader class
