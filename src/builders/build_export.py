@@ -7,12 +7,15 @@ from io import BytesIO
 from datetime import date
 from src.shared.handlebars_helpers import left_pad, right_pad, format_date, format_money
 from pybars import Compiler
+# Utilities
+from src.shared.env_loader import EnvLoader
+from src.shared.file_loader import FileLoader
+from src.shared.template_processor import TemplateProcessor
+#Uploaders
 from src.uploaders.aws_bucket import S3Uploader
 from src.uploaders.sfpt import SftpUploader
 from src.uploaders.ms_email import MSEmail
 from src.uploaders.smtp_email import SMTPEmailSender
-from src.shared.env_loader import EnvLoader
-from src.shared.file_loader import FileLoader
 from src.uploaders.slack_messanger import SlackMessenger
 
 logger = logging.getLogger(__name__)
@@ -29,9 +32,8 @@ class ExportData:
         """
         logger.info("Initializing ExportData.")
         self.__script_dir = os.path.dirname(__file__)
-        self.__working_data = working_data
         env = EnvLoader()
-        conf = {
+        template_conf = {
             "type": env.get(
                 name="TEMPLATE_FILE_STORAGE_TYPE",
                 default="local").upper(),
@@ -42,13 +44,14 @@ class ExportData:
                 name="TEMPLATE_FILE_LOCATION",
                 default="local")
         }
-        self.__file_loader = FileLoader(conf)
-        logger.info("ExportData initialized with configuration: %s", conf)
+        file_loader = FileLoader(template_conf)
+        self.__template_processor = TemplateProcessor(working_data, file_loader)
+        logger.info("ExportData initialized with configuration: %s", template_conf)
 
         if 'export' in settings and settings['export'] is not None:
             for conf in settings['export']:
                 logger.info("Processing export configuration: %s", conf)
-                processed_data = self.__process_template(conf)
+                processed_data = self.__template_processor.process_template(conf)
 
                 file_name = self.__process_file_name(conf)
                 logger.debug("Processed file name: %s", file_name)
@@ -68,61 +71,6 @@ class ExportData:
             file_name = file_name.replace('{date}', date_string)
         logger.debug("Processed file name: %s", file_name)
         return file_name
-
-    def __process_template(self, conf):
-        """
-        This function processes the template based on the configuration.
-        It uses the handlebars template engine to compile the template
-        and process the data.
-        :param conf: The configuration dictionary for the export.
-        :return: The processed data as a string.
-        """
-        logger.info("Processing template with configuration: %s", conf)
-        compiler = Compiler()
-        helpers = {
-            'left_pad': left_pad,
-            'right_pad': right_pad,
-            'format_date': format_date,
-            'format_money': format_money
-        }
-
-        match conf['template_data'].upper():
-            case 'CHARGE_DATA':
-                template_data = self.__working_data["charge_data"]
-            case 'REFUND_DATA':
-                template_data = self.__working_data["refund_data"]
-            case 'BOTH':
-                template_data = {
-                    "charge": self.__working_data["charge_data"],
-                    "credit": self.__working_data["refund_data"]
-                }
-            case 'PROCESS_DATA':
-                template_data = self.__working_data["process_data"]
-            case 'ALL_DATA':
-                template_data = {
-                    "charge": self.__working_data["charge_data"],
-                    "credit": self.__working_data["refund_data"],
-                    "process": self.__working_data["process_data"]
-                }
-            case _:
-                logger.error("Invalid export type: %s", conf['template_data'])
-                raise ValueError("Invalid export type")
-        
-        if conf['template_name'].upper() == 'DUMP_JSON':
-            logger.debug("Serializing data to JSON format.")
-            processed_data = json.dumps(template_data, indent=4)
-        else:
-            logger.debug("Loading template file: %s.handlebars", conf['template_name'])
-            template = self.__file_loader.load_file(
-                    f'{conf["template_name"]}.handlebars',
-                    is_yaml=False
-                )
-            logger.debug("Compiling template with handlebars.")
-            compiled_template = compiler.compile(template)
-            processed_data = compiled_template(
-                template_data, helpers=helpers)
-        logger.info("Template processing complete.")
-        return processed_data
 
     def __ship_package(self, conf, file_name, data):
         """
@@ -163,7 +111,7 @@ class ExportData:
                     logger.debug("Processing email attachments.")
                     for attach in conf['attachment']:
                         logger.debug("Processing email attachment: %s", attach)
-                        attachment_data = self.__process_template(attach)
+                        attachment_data = self.__template_processor.process_template(attach)
                         attachment_name = self.__process_file_name(attach)
                         msg.add_attachment(attachment_data, attachment_name)
                 msg.send_message()
@@ -175,7 +123,7 @@ class ExportData:
                     logger.debug("Processing Slack attachments.")
                     for attach in conf['attachment']:
                         logger.debug("Processing Slack attachment: %s", attach)
-                        attachment_data = self.__process_template(attach)
+                        attachment_data = self.__template_processor.process_template(attach)
                         attachment_name = self.__process_file_name(attach)
                         slack.upload_file(
                             file_stream=attachment_data,

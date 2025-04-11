@@ -4,6 +4,7 @@ This module processes the active jobs based on the configuration file.
 from datetime import date
 import os
 import logging
+import functools
 from calendar import monthrange
 from src.builders.process_fines import ProcessFines
 from src.shared.yaml_loader import YamlLoader
@@ -11,9 +12,29 @@ from src.shared.call_functions import CallFunctions
 from src.builders.build_charges import BuildCharges
 from src.builders.build_credits import BuildCredits
 from src.builders.build_export import ExportData
+from src.builders.build_connters import SendToConnecter
 
 logger = logging.getLogger(__name__)
 
+def catch_exception(method):
+    """
+    Decorator to catch exceptions in methods.
+    This decorator logs the exception and allows the program to continue
+    running without crashing.
+    :param method: The method to be decorated.
+    :return: The wrapped method.
+    """
+    @functools.wraps(method)
+    def wrapper(*args, **kwargs):
+        try:
+            return method(*args, **kwargs)
+        except Exception as e: #pylint: disable=broad-except
+            print(f"Exception in {method.__name__}: {e}")
+            # Handle the exception or re-raise it if necessary
+            # raise  # Uncomment to re-raise the exception after logging
+            return None # Or return a default value
+
+    return wrapper
 
 class JobProcessor:
     """
@@ -25,7 +46,7 @@ class JobProcessor:
         __check_month(job : dict) -> bool
         __check_day(job : dict) -> bool
     """
-
+    @catch_exception
     def __init__(self):
         self.active_jobs = []
 
@@ -43,6 +64,7 @@ class JobProcessor:
                     len(self.active_jobs))
         logger.debug("Active jobs: %s", self.active_jobs)
 
+    @catch_exception
     def process_active_jobs(self):
         """
         This function processes the active jobs based on the configuration file.
@@ -88,6 +110,7 @@ class JobProcessor:
                     trans_active).get_process_data()
                 logger.debug("Process data %s",
                             process_data)
+
                 # Build the export data
                 working_data = {
                     "charge_data": charge_data,
@@ -97,12 +120,16 @@ class JobProcessor:
                 ExportData(working_data, settings)
                 logger.info("Job %s processed successfully.",
                     job.get('name', 'Unnamed Test Job'))
+
+                SendToConnecter(working_data, settings)
+                logger.info("Data sent to connector successfully.")
             except Exception as e: #pylint: disable=broad-except
                 logger.error("Error processing job '%s': %s",
                              job.get('name', 'Unnamed Job'), e,
                              exc_info=True)
                 raise e
 
+    @catch_exception
     def run_test_job(self, job):
         """
         This function runs a test job based on the provided job configuration.
