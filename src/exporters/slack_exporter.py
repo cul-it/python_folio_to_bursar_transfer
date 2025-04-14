@@ -8,20 +8,26 @@ and channel information.
 import logging
 from slack_sdk import WebClient
 from src.shared.env_loader import EnvLoader
+from src.shared.common_helpers import generate_file_name
 
 logger = logging.getLogger(__name__)
 
 
-class SlackMessenger:
+class SlackExporter:
     """
     This class is responsible for sending messages to a Slack channel.
     """
 
-    def __init__(self, env_key):
+    def __init__(self, conf, template_processor):
         """
         Initialize the SlackMessenger class.
         :param conf: The configuration settings for the job.
         """
+        env_key = conf['env_key']
+        logger.info("Initializing SftpUploader with env_key: %s", env_key)
+        self.__conf = conf
+        self.__template_processor = template_processor
+
         logger.info("Initializing SlackMessenger with env_key: %s", env_key)
         env = EnvLoader()
 
@@ -98,4 +104,24 @@ class SlackMessenger:
                 e,
                 exc_info=True)
             raise
+
+    def ship_it(self):
+        logger.info("Processing export configuration: %s", self.__conf)
+        processed_data = self.__template_processor.process_template(self.__conf)
+        file_name = generate_file_name(self.__conf)
+        logger.debug("Processed file name: %s", file_name)
+
+        logger.info("Sending via Slack.")      
+        self.send_message(message=processed_data, header=file_name)
+        if 'attachment' in self.__conf and self.__conf['attachment']:
+            logger.debug("Processing Slack attachments.")
+            for attach in self.__conf['attachment']:
+                logger.debug("Processing Slack attachment: %s", attach)
+                attachment_data = self.__template_processor.process_template(attach)
+                attachment_name = generate_file_name(attach)
+                self.upload_file(
+                    file_stream=attachment_data,
+                    title=attachment_name,
+                    comment=attach["comment"] if "comment" in attach else None
+                )
 # End of class

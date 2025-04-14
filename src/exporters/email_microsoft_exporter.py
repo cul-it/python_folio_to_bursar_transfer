@@ -6,19 +6,25 @@ from O365 import Account, FileSystemTokenBackend
 from O365.utils import AWSS3Backend
 from src.uploaders.o365_backends import CustomAwsS3Backend
 from src.shared.env_loader import EnvLoader
+from src.shared.common_helpers import generate_file_name
 
 logger = logging.getLogger(__name__)
 
 
-class MSEmail:
+class EmailMicrosoftExporter:
     """
     A class to handle sending emails using Microsoft Graph API.
     """
 
-    def __init__(self, env_key):
+    def __init__(self, conf, template_processor):
         """
         Initializes the MSEmail class with client ID, client secret, and tenant ID.
         """
+        env_key = conf['env_key']
+        logger.info("Initializing SftpUploader with env_key: %s", env_key)
+        self.__conf = conf
+        self.__template_processor = template_processor
+
         logger.info("Initializing MSEmail with env_key: %s", env_key)
         credentials = (
             EnvLoader().get(name=f"{env_key}_CLIENT_ID"),
@@ -112,5 +118,28 @@ class MSEmail:
             logger.error("Failed to add attachment: %s", e, exc_info=True)
             raise
         return True
+    
+    def ship_it(self):
+        logger.info("Processing export configuration: %s", self.__conf)
+        processed_data = self.__template_processor.process_template(self.__conf)
+        file_name = generate_file_name(self.__conf)
+        logger.debug("Processed file name: %s", file_name)
+
+        self.build_message(
+                        to=self.__conf['export_to'],
+                        subject=file_name,
+                        body=processed_data
+                    )
+        
+
+        if 'attachment' in self.__conf and self.__conf['attachment']:
+            logger.debug("Processing email attachments.")
+            for attach in self.__conf['attachment']:
+                logger.debug("Processing email attachment: %s", attach)
+                attachment_data = self.__template_processor.process_template(attach)
+                attachment_name = generate_file_name(attach)
+                self.add_attachment(attachment_data, attachment_name)
+        
+        self.send_message()
 
 # End of the class MSEmail

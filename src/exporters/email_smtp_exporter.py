@@ -11,23 +11,29 @@ from email.mime.base import MIMEBase
 from email import encoders
 from typing import List
 from src.shared.env_loader import EnvLoader
+from src.shared.common_helpers import generate_file_name
 
 logger = logging.getLogger(__name__)
 
 
-class SMTPEmailSender:
+class EmailSmtpExporter:
     """
     A class to send emails via SMTP with support for secure and insecure connections,
     and the ability to add multiple attachments.
     """
 
-    def __init__(self, env_key):
+    def __init__(self, conf, template_processor):
         """
         Initialize the SMTPEmailSender class.
         :param env_key: The environment key for loading SMTP configuration
             from environment variables.
         :return: None
         """
+        env_key = conf['env_key']
+        logger.info("Initializing SftpUploader with env_key: %s", env_key)
+        self.__conf = conf
+        self.__template_processor = template_processor
+
         logger.info("Initializing SMTPEmailSender with env_key: %s", env_key)
         self.__smtp_server = EnvLoader().get(name=f"{env_key}_HOST")
         self.__port = EnvLoader().get(name=f"{env_key}_PORT")
@@ -99,4 +105,28 @@ class SMTPEmailSender:
         except Exception as e:
             logger.error("Failed to send email: %s", e, exc_info=True)
             raise RuntimeError(f"An error occurred: {e}") from e
+        
+
+    def ship_it(self):
+        logger.info("Processing export configuration: %s", self.__conf)
+        processed_data = self.__template_processor.process_template(self.__conf)
+        file_name = generate_file_name(self.__conf)
+        logger.debug("Processed file name: %s", file_name)
+
+        self.build_message(
+                        to=self.__conf['export_to'],
+                        subject=file_name,
+                        body=processed_data
+                    )
+        
+
+        if 'attachment' in self.__conf and self.__conf['attachment']:
+            logger.debug("Processing email attachments.")
+            for attach in self.__conf['attachment']:
+                logger.debug("Processing email attachment: %s", attach)
+                attachment_data = self.__template_processor.process_template(attach)
+                attachment_name = generate_file_name(attach)
+                self.add_attachment(attachment_data, attachment_name)
+        
+        self.send_message()
 # End of class SMTPEmailSender

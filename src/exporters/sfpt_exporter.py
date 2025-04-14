@@ -12,23 +12,29 @@ import paramiko
 from paramiko import RSAKey, Ed25519Key
 from src.uploaders.aws_bucket import S3Uploader
 from src.shared.env_loader import EnvLoader
+from src.shared.common_helpers import generate_file_name
 
 logger = logging.getLogger(__name__)
 
 
-class SftpUploader:
+class SfptExporter:
     """
     A class to handle SFTP file uploads.
     """
 
     # pylint: disable-next=too-many-branches, too-many-statements
-    def __init__(self, env_key):
+    def __init__(self, conf, template_processor):
         """
         Transfer a file to an SFTP server using either a certificate (private key) or
         username and password.
         :param env_key: The environment key used in the .env file to retrieve S3 bucket and FTP.
         :return: None
         """
+        env_key = conf['env_key']
+        logger.info("Initializing SftpUploader with env_key: %s", env_key)
+        self.__conf = conf
+        self.__template_processor = template_processor
+
         logger.info("Initializing SftpUploader with env_key: %s", env_key)
         self.__ftp_remote_path = EnvLoader().get(name=f"{env_key}_REMOTE_PATH")
 
@@ -128,6 +134,20 @@ class SftpUploader:
             )
         self.__sftp = self.__ssh_client.open_sftp()
         logger.info("SftpUploader initialized successfully.")
+
+    def ship_it(self):
+        """
+        Uploads the processed data to the SFTP server.
+        :return: True if the upload was successful, False otherwise.
+        """
+        logger.info("Processing export configuration: %s", self.__conf)
+        processed_data = self.__template_processor.process_template(self.__conf)
+        file_name = generate_file_name(self.__conf)
+        logger.debug("Processed file name: %s", file_name)
+
+        logger.info("Uploading to Secure FTP site.")
+        self.upload_file(processed_data, file_name)
+        return True
 
     def upload_file(self, file_contents, file_name):
         """
