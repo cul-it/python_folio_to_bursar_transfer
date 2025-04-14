@@ -6,9 +6,9 @@ import os
 import logging
 import functools
 from calendar import monthrange
-from src.builders.process_fines import ProcessFines
+from src.builders.build_actions import BuildActions
 from src.shared.yaml_loader import YamlLoader
-from src.shared.call_functions import CallFunctions
+from src.shared.folio_connector import FolioConnector
 from src.builders.build_charges import BuildCharges
 from src.builders.build_credits import BuildCredits
 from src.builders.build_export import ExportData
@@ -83,7 +83,7 @@ class JobProcessor:
                              settings)
 
                 # set up the connector to FOLIO -- this is used by all functions to
-                connector = CallFunctions(job)
+                connector = FolioConnector(job)
                 logger.info("Connector initialized.")
 
                 # Build the charge data
@@ -103,7 +103,7 @@ class JobProcessor:
                 trans_active = job["trans_active"] if 'trans_active' in job else False
                 logger.debug("Transaction active: %s",
                              trans_active)
-                process_data = ProcessFines(
+                process_data = BuildActions(
                     connector,
                     charge_data["data"],
                     settings,
@@ -148,7 +148,7 @@ class JobProcessor:
             settings = YamlLoader().load_config(job_config)
 
             # set up the connector to FOLIO -- this is used by all functions to
-            connector = CallFunctions(job)
+            connector = FolioConnector(job)
 
             # Build the charge data
             charge_data = BuildCharges(connector, settings).get_charges()
@@ -159,7 +159,7 @@ class JobProcessor:
             logger.debug("Refund data: %s",refund_data)
 
             # Process the Fine data
-            process_data = ProcessFines(
+            process_data = BuildActions(
                 connector,
                 charge_data["data"],
                 settings,

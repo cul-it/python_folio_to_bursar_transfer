@@ -10,7 +10,7 @@ from src.shared.env_loader import EnvLoader
 logger = logging.getLogger(__name__)
 
 
-class CallFunctions:
+class FolioConnector:
     """
     This class is used to get the auth token and to make requests to the FOLIO API.
 
