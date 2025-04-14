@@ -1,25 +1,34 @@
 #!/usr/bin/env python3
-import os
-import json
 import logging
+import importlib
 from datetime import date
 # Utilities
 from src.shared.env_loader import EnvLoader
 from src.shared.file_loader import FileLoader
 from src.shared.template_processor import TemplateProcessor
-#Uploaders / Connectors
-from src.uploaders.air_table import AirTableImporter
+from src.shared.common_helpers import pascal_to_camel_case
 
 logger = logging.getLogger(__name__)
 
 class SendToConnecter:
-
+    """
+    This class is responsible for sending data to various connectors.
+    It dynamically loads the appropriate connector class based on the configuration.
+    Private methods:
+        - __init__: Initializes the SendToConnecter class.
+        - __process_inline: Processes inline configuration.
+        - __extract_data: Recursively searches for a key in a nested JSON object.
+        - __ship_package: Ships the package to the specified connector.
+    accepts:
+        :param working_data: The data to be processed and sent to the connector.
+        :param settings: The configuration settings for the connector.
+    returns: None
+    """
     def __init__(self, working_data, settings):
         """
         Initialize the SendToConnecter class.
         :param env_key: The environment key for the connector.
         """
-        self.__script_dir = os.path.dirname(__file__)
         env = EnvLoader()
         template_conf = {
             "type": env.get(
@@ -97,23 +106,45 @@ class SendToConnecter:
     def __ship_package(self, conf, data):
         """
         This function is responsible for shipping the package.
-        The location is based on the configuration file.
+        Dynamically loads the connector class based on the connector_type.
         """
         logger.info("Shipping package with configuration: %s", conf)
-        match conf['connector_type'].upper():
-            case 'AIRTABLE':
-                air = AirTableImporter(env_key=conf['env_key'])
-                logger.info("Uploading to AirTable.")
-                if conf['connector_action'].upper() == "CREATE":
-                    results = air.write_rows(data=data)
-                elif conf['connector_action'].upper() == "UPDATE":
-                    results = air.update_rows(data=data, filter_string=conf["filter_filed"])
-                elif conf['connector_action'].upper() == "DELETE":
-                    results = air.delete_rows(data=data, filter_string=conf["filter_filed"])
-                else:
-                    logger.error("Invalid connector action for AirTable: %s", conf['connector_action'])
-                    raise ValueError("Invalid connector action for AirTable")
 
-            case _:
-                logger.error("Invalid export type for shipping package: %s", conf['export_type'])
-                raise ValueError("Invalid export type for shipping package")
+        try:
+            # Dynamically import the connector class
+            module_name = f"src.connectors.{pascal_to_camel_case(conf['connector_type'])}"
+            class_name = conf['connector_type']
+            module = importlib.import_module(module_name)
+            connector_class = getattr(module, class_name)
+        except (ModuleNotFoundError, AttributeError) as e:
+            logger.error("Failed to load connector class for type: %s. Error: %s",
+                         conf['connector_type'], e)
+            raise ValueError(f"Invalid connector type: {conf['connector_type']}")
+
+        # Initialize the connector instance
+        connector_instance = connector_class(env_key=conf['env_key'])
+        logger.info("Uploading to %s.", conf['connector_type'])
+
+        # Define actions
+        actions = {
+            "CREATE": connector_instance.write_rows,
+            "UPDATE": lambda data: connector_instance.update_rows(
+                data=data, filter_string=conf["filter_filed"]),
+            "DELETE": lambda data: connector_instance.delete_rows(
+                data=data, filter_string=conf["filter_filed"])
+        }
+
+        # Get the action
+        action = actions.get(conf['connector_action'].upper())
+        if not action:
+            logger.error("Invalid connector action for %s: %s",
+                         conf['connector_type'], conf['connector_action'])
+            raise ValueError("Invalid connector action")
+
+        # Execute the action
+        results = action(data)
+        logger.debug("%s %s results: %s", conf['connector_type'],
+                     conf['connector_action'], results)
+
+# End of SendToConnecter class
+
