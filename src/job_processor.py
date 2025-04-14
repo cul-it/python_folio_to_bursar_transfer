@@ -12,7 +12,7 @@ from src.shared.call_functions import CallFunctions
 from src.builders.build_charges import BuildCharges
 from src.builders.build_credits import BuildCredits
 from src.builders.build_export import ExportData
-from src.builders.build_connters import SendToConnecter
+from src.builders.build_connectors import SendToConnecter
 
 logger = logging.getLogger(__name__)
 
