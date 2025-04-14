@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+"""
+SendToConnecter class
+This class is responsible for sending data to various connectors.
+It dynamically loads the appropriate connector class based on the configuration."""
+# pylint: disable=R0801,too-few-public-methods
 import logging
 import importlib
 from datetime import date
@@ -9,6 +14,7 @@ from src.shared.template_processor import TemplateProcessor
 from src.shared.common_helpers import pascal_to_camel_case
 
 logger = logging.getLogger(__name__)
+
 
 class SendToConnecter:
     """
@@ -24,6 +30,7 @@ class SendToConnecter:
         :param settings: The configuration settings for the connector.
     returns: None
     """
+
     def __init__(self, working_data, settings):
         """
         Initialize the SendToConnecter class.
@@ -42,19 +49,25 @@ class SendToConnecter:
                 default="local")
         }
         file_loader = FileLoader(template_conf)
-        self.__template_processor = TemplateProcessor(working_data, file_loader)
-        logger.info("ExportData initialized with configuration: %s", template_conf)
+        self.__template_processor = TemplateProcessor(
+            working_data, file_loader)
+        logger.info(
+            "ExportData initialized with configuration: %s",
+            template_conf)
 
         if 'connectors' in settings and settings['connectors'] is not None:
             for conf in settings['connectors']:
                 logger.info("Processing connectors configuration: %s", conf)
 
                 if conf['mapping_type'].upper() == "TEMPLATE":
-                    processed_data = self.__template_processor.process_template(conf)
+                    processed_data = self.__template_processor.process_template(
+                        conf)
                 elif conf['mapping_type'].upper() == "INLINE":
                     processed_data = self.__process_inline(conf)
                 else:
-                    logger.error("Invalid mapping type: %s", conf['mapping_type'])
+                    logger.error(
+                        "Invalid mapping type: %s",
+                        conf['mapping_type'])
                     continue
                 logger.debug("Processed data: %s", processed_data)
 
@@ -67,7 +80,8 @@ class SendToConnecter:
         :return: The processed data as a string.
         """
         logger.info("Processing inline configuration: %s", conf)
-        template_date = self.__template_processor.process_data(conf['field_data'])
+        template_date = self.__template_processor.process_data(
+            conf['field_data'])
         data_array = []
         for data in template_date["data"]:
             temp_array = {}
@@ -75,14 +89,13 @@ class SendToConnecter:
                 match pattern["field_type"].upper():
                     case "DYNAMIC":
                         temp_array[pattern["field_name"]] = self.__extract_data(
-                                pattern["field_source"], data
-                            )
+                            pattern["field_source"], data)
                     case "STATIC":
-                        temp_array[pattern["field_name"]] = pattern["field_format"]
+                        temp_array[pattern["field_name"]
+                                   ] = pattern["field_format"]
                     case "DATE":
                         temp_array[pattern["field_name"]] = date.today().strftime(
-                                pattern["field_format"]
-                            )
+                            pattern["field_format"])
             data_array.append(temp_array)
         logger.debug("Processed inline data: %s", data_array)
         return data_array
@@ -102,7 +115,6 @@ class SendToConnecter:
                 return None
         return data
 
-
     def __ship_package(self, conf, data):
         """
         This function is responsible for shipping the package.
@@ -112,14 +124,21 @@ class SendToConnecter:
 
         try:
             # Dynamically import the connector class
-            module_name = f"src.connectors.{pascal_to_camel_case(conf['connector_type'])}"
+            module_name = f"src.connectors.{
+                pascal_to_camel_case(
+                    conf['connector_type'])}"
             class_name = conf['connector_type']
             module = importlib.import_module(module_name)
             connector_class = getattr(module, class_name)
         except (ModuleNotFoundError, AttributeError) as e:
-            logger.error("Failed to load connector class for type: %s. Error: %s",
-                         conf['connector_type'], e)
-            raise ValueError(f"Invalid connector type: {conf['connector_type']}")
+            logger.error(
+                "Failed to load connector class for type: %s. Error: %s",
+                conf['connector_type'],
+                e)
+            raise ValueError(
+                f"Invalid connector type: {
+                    conf['connector_type']}"
+                    ) from e
 
         # Initialize the connector instance
         connector_instance = connector_class(env_key=conf['env_key'])
@@ -147,4 +166,3 @@ class SendToConnecter:
                      conf['connector_action'], results)
 
 # End of SendToConnecter class
-

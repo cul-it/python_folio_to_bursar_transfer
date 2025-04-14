@@ -1,4 +1,5 @@
 """Python script to send emails using Microsoft Graph API with OAuth2 authentication."""
+# pylint: disable=R0801
 import re
 import logging
 from io import BytesIO
@@ -118,28 +119,32 @@ class EmailMicrosoftExporter:
             logger.error("Failed to add attachment: %s", e, exc_info=True)
             raise
         return True
-    
+
     def ship_it(self):
+        """
+        Processes the export configuration and sends the email.
+        """
         logger.info("Processing export configuration: %s", self.__conf)
-        processed_data = self.__template_processor.process_template(self.__conf)
+        processed_data = self.__template_processor.process_template(
+            self.__conf)
         file_name = generate_file_name(self.__conf)
         logger.debug("Processed file name: %s", file_name)
 
         self.build_message(
-                        to=self.__conf['export_to'],
-                        subject=file_name,
-                        body=processed_data
-                    )
-        
+            to=self.__conf['export_to'],
+            subject=file_name,
+            body=processed_data
+        )
 
         if 'attachment' in self.__conf and self.__conf['attachment']:
             logger.debug("Processing email attachments.")
             for attach in self.__conf['attachment']:
                 logger.debug("Processing email attachment: %s", attach)
-                attachment_data = self.__template_processor.process_template(attach)
+                attachment_data = self.__template_processor.process_template(
+                    attach)
                 attachment_name = generate_file_name(attach)
                 self.add_attachment(attachment_data, attachment_name)
-        
+
         self.send_message()
 
 # End of the class MSEmail

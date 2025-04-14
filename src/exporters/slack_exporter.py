@@ -5,6 +5,7 @@ Slack channel.
 It is initialized with the environment key to retrieve the necessary credentials
 and channel information.
 """
+# pylint: disable=R0801
 import logging
 from slack_sdk import WebClient
 from src.shared.env_loader import EnvLoader
@@ -106,18 +107,23 @@ class SlackExporter:
             raise
 
     def ship_it(self):
+        """
+        Processes the export configuration and sends the message to Slack.
+        """
         logger.info("Processing export configuration: %s", self.__conf)
-        processed_data = self.__template_processor.process_template(self.__conf)
+        processed_data = self.__template_processor.process_template(
+            self.__conf)
         file_name = generate_file_name(self.__conf)
         logger.debug("Processed file name: %s", file_name)
 
-        logger.info("Sending via Slack.")      
+        logger.info("Sending via Slack.")
         self.send_message(message=processed_data, header=file_name)
         if 'attachment' in self.__conf and self.__conf['attachment']:
             logger.debug("Processing Slack attachments.")
             for attach in self.__conf['attachment']:
                 logger.debug("Processing Slack attachment: %s", attach)
-                attachment_data = self.__template_processor.process_template(attach)
+                attachment_data = self.__template_processor.process_template(
+                    attach)
                 attachment_name = generate_file_name(attach)
                 self.upload_file(
                     file_stream=attachment_data,

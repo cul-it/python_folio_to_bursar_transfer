@@ -3,6 +3,7 @@ This script provides a function to upload files to an SFTP server using either
 a private key or username and password authentication. It handles errors
 and provides feedback on the upload process.
 """
+# pylint: disable=R0801
 import io
 import logging
 from base64 import decodebytes
@@ -141,7 +142,8 @@ class SfptExporter:
         :return: True if the upload was successful, False otherwise.
         """
         logger.info("Processing export configuration: %s", self.__conf)
-        processed_data = self.__template_processor.process_template(self.__conf)
+        processed_data = self.__template_processor.process_template(
+            self.__conf)
         file_name = generate_file_name(self.__conf)
         logger.debug("Processed file name: %s", file_name)
 

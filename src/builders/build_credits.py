@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-import os
+"""
+BuildCredits class
+This class is responsible for building the credit data for FOLIO.
+It retrieves the data from the FOLIO system and processes it according to the
+configuration file."""
+# pylint: disable=R0801,too-few-public-methods
 import logging
 import json
 from datetime import date, timedelta
@@ -96,7 +101,9 @@ exposed methods:
 
         # Merge patron data into the Fee fine data
         self.__filter_data['rawRecordCount'] = len(credit_data)
-        logger.info("Raw record count: %d", self.__filter_data['rawRecordCount'])
+        logger.info(
+            "Raw record count: %d",
+            self.__filter_data['rawRecordCount'])
         logger.debug("Credit data: %s", json.dumps(credit_data, indent=4))
         logger.info("Credit data retrieval complete.")
 
@@ -113,15 +120,15 @@ exposed methods:
                     credit_data, config)
                 logger.debug("Applied merger: %s", config)
 
-        logger.debug("Credit data after formatters and merges: %s", 
-                    json.dumps(credit_data, indent=4))
+        logger.debug("Credit data after formatters and merges: %s",
+                     json.dumps(credit_data, indent=4))
 
         if 'filters' in self.__settings and 'credit_filters' in self.__settings['filters']:
             for config in self.__settings['filters']['credit_filters']:
                 credit_data = self.__data_processor.general_filter_function(
                     credit_data, config)
-                logger.debug("Credit data after filter %s: %s", 
-                            config["name"], json.dumps(credit_data, indent=4))
+                logger.debug("Credit data after filter %s: %s",
+                             config["name"], json.dumps(credit_data, indent=4))
                 logger.debug("Applied filter: %s", config)
 
         self.__filter_data.update(self.__data_processor.get_filter_data())
@@ -163,9 +170,14 @@ exposed methods:
             "endDate": end_age.strftime(date_format),
             "feeFineOwners": []
         }
-        logger.debug("Generated URL and body for outstanding credits: %s, %s", url, body)
+        logger.debug(
+            "Generated URL and body for outstanding credits: %s, %s",
+            url,
+            body)
         data = self.__connector.post_request(url, body)
-        logger.info("Retrieved outstanding credits: %d records", len(data['reportData']))
+        logger.info(
+            "Retrieved outstanding credits: %d records", len(
+                data['reportData']))
         return data['reportData']
 
     def __get_fee_fine_data(self, credit_data):
@@ -179,7 +191,9 @@ exposed methods:
         for c in credit_data:
             url = f'/accounts/{c["feeFineId"]}'
             c['feeFineData'] = self.__connector.get_request(url)
-            logger.debug("Retrieved fee fine data for credit: %s", c["feeFineId"])
+            logger.debug(
+                "Retrieved fee fine data for credit: %s",
+                c["feeFineId"])
         logger.info("Fee fine data merged into credit_data.")
         return credit_data
 
@@ -218,7 +232,9 @@ exposed methods:
             logger.debug("Material type added: %s", m['id'])
         for c in credit_data:
             c['material'] = new_data[c['feeFineData']['materialTypeId']]
-            logger.debug("Material data added for credit: %s", c['feeFineData']['materialTypeId'])
+            logger.debug(
+                "Material data added for credit: %s",
+                c['feeFineData']['materialTypeId'])
         logger.info("Material data merged into credit_data.")
         return credit_data
 # End of BuildCredits class

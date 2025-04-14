@@ -1,8 +1,22 @@
+"""
+RefundFineAction class for handling fine refund actions in a library system.
+"""
+# pylint: disable=R0801
 import logging
 
 logger = logging.getLogger(__name__)
 
+
 class RefundFineAction:
+    """
+    A class to handle the refund of fines in a library system.
+    It checks if the refund can proceed and executes the refund if allowed.
+    public methods:
+    - check: Validates if the refund can be processed for a given fine.
+    - execute: Processes the refund for a given fine.
+    - undo: Reverts the refund action.
+    """
+
     def __init__(self, conf, folio_connection, trans_active):
         """
         Initialize the RefundFineAction class.
@@ -13,9 +27,12 @@ class RefundFineAction:
         self.__conf = conf
         self.__connector = folio_connection
 
-        logger.info("Initializing RefundFineAction with settings: %s", conf["name"])
+        logger.info(
+            "Initializing RefundFineAction with settings: %s",
+            conf["name"])
         process_active = conf["process_active"] if trans_active in conf else True
-        self.__do_refund = not (str(process_active).lower() == "false" or str(trans_active).lower() == "false")
+        self.__do_refund = not (str(process_active).lower(
+        ) == "false" or str(trans_active).lower() == "false")
         logger.debug("Refund process active: %s", self.__do_refund)
 
     def check(self, fine):
@@ -24,29 +41,43 @@ class RefundFineAction:
         :param fine: The fine object to check.
         :return: fine.
         """
-        logger.info("Checking refund conditions for fine ID: %s", fine.get("id"))
+        logger.info(
+            "Checking refund conditions for fine ID: %s",
+            fine.get("id"))
         if self.__conf["name"] not in fine:
             fine[self.__conf["name"]] = {}
         if fine["amount"] <= 0:
-            logger.warning("Refund not allowed for non-positive amounts. Fine ID: %s", fine.get("id"))
+            logger.warning(
+                "Refund not allowed for non-positive amounts. Fine ID: %s",
+                fine.get("id"))
             fine[self.__conf["name"]]["check"] = {}
             fine[self.__conf["name"]]["check"]["allowed"] = False
         else:
-            logger.debug("Refund allowed for positive amounts. Fine ID: %s", fine.get("id"))
+            logger.debug(
+                "Refund allowed for positive amounts. Fine ID: %s",
+                fine.get("id"))
             body = {"amount": fine["amount"]}
             url = f"/accounts/{fine['id']}/check-refund"
-            logger.debug("Checking refund action for fine ID: %s with URL: %s", fine["id"], url)
+            logger.debug(
+                "Checking refund action for fine ID: %s with URL: %s",
+                fine["id"],
+                url)
             try:
                 check_response = self.__connector.post_request(url, body)
                 fine[self.__conf["name"]]["check"] = check_response
                 if check_response["allowed"]:
-                    logger.info("Refund check passed for fine ID: %s", fine["id"])
+                    logger.info(
+                        "Refund check passed for fine ID: %s", fine["id"])
                 else:
-                    logger.warning("Refund check failed for fine ID: %s", fine["id"])
-                return fine
+                    logger.warning(
+                        "Refund check failed for fine ID: %s", fine["id"])
             except Exception as e:
-                logger.error("Error during refund check for fine ID: %s. Error: %s", fine["id"], e)
+                logger.error(
+                    "Error during refund check for fine ID: %s. Error: %s",
+                    fine["id"],
+                    e)
                 raise
+        return fine
 
     def execute(self, fine):
         """
@@ -69,15 +100,25 @@ class RefundFineAction:
         url_2 = f"/accounts/{fine['id']}/refund"
 
         if self.__do_refund:
-            logger.debug("Processing refund for fine ID: %s with URL: %s", fine["id"], url_2)
+            logger.debug(
+                "Processing refund for fine ID: %s with URL: %s",
+                fine["id"],
+                url_2)
             logger.debug("Refund body: %s", body_2)
             try:
                 # Uncomment the following line to enable actual refund processing
-                # fine[self.__conf["name"]]["process"] = self.__connector.post_request(url_2, body_2)
-                fine[self.__conf["name"]]["process"] = {"message": "Refund processed successfully"}
-                logger.info("Refund processed successfully for fine ID: %s", fine["id"])
+                # fine[self.__conf["name"]]["process"] =
+                # self.__connector.post_request(url_2, body_2)
+                fine[self.__conf["name"]]["process"] = {
+                    "message": "Refund processed successfully"}
+                logger.info(
+                    "Refund processed successfully for fine ID: %s",
+                    fine["id"])
             except Exception as e:
-                logger.error("Error processing refund for fine ID: %s. Error: %s", fine["id"], e)
+                logger.error(
+                    "Error processing refund for fine ID: %s. Error: %s",
+                    fine["id"],
+                    e)
                 raise
         else:
             logger.warning("Refund not processed for fine ID: %s", fine["id"])

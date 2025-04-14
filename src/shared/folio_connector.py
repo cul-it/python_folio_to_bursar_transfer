@@ -17,9 +17,9 @@ class FolioConnector:
     init:
         job: The job object that is passed to the script. This is used to get the run_env.
     exposed methods:
-        get_requests(url_part: str) -> dict: This function is used to perform a get 
+        get_requests(url_part: str) -> dict: This function is used to perform a get
             action against the FOLIO API.
-        post_requests(url_part: str, body: dict) -> dict: This function is used to 
+        post_requests(url_part: str, body: dict) -> dict: This function is used to
             perform a post action against the FOLIO API.
     Internal methods:
         __login() -> dict: This function is used to get the auth token.
@@ -39,8 +39,10 @@ class FolioConnector:
         logger.info("Headers: %s", self.__headers)
         try:
             cookies = self.__login()
-            self.__auth_cookie = {'folioAccessToken': cookies['folioAccessToken']}
-            self.__renew_cookie = {'folioAccessToken': cookies['folioAccessToken']}
+            self.__auth_cookie = {
+                'folioAccessToken': cookies['folioAccessToken']}
+            self.__renew_cookie = {
+                'folioAccessToken': cookies['folioAccessToken']}
             logger.info("Auth cookie: %s", self.__auth_cookie)
             logger.info("Renew cookie: %s", self.__renew_cookie)
         except Exception as e:
@@ -59,7 +61,11 @@ class FolioConnector:
             "password": EnvLoader().get(name=f'{self.run_env}_USER_PASSWORD'),
         }
         try:
-            r = requests.post(url, json=data, headers=self.__headers, timeout=30)
+            r = requests.post(
+                url,
+                json=data,
+                headers=self.__headers,
+                timeout=30)
             r.raise_for_status()
             if r.status_code == 201:
                 cookie_data = {}
@@ -74,7 +80,7 @@ class FolioConnector:
             raise
         return None
 
-    def __renew_token(self): #pylint: disable=unused-private-member
+    def __renew_token(self):  # pylint: disable=unused-private-member
         """
         This function is used to renew the auth token.
         """
@@ -106,7 +112,9 @@ class FolioConnector:
             if 'totalRecords' in data and data['totalRecords'] == 0:
                 logger.warning("No records found in response.")
             if 'totalRecords' in data and data['totalRecords'] > 0:
-                logger.info("Records found in response: %s", data['totalRecords'])
+                logger.info(
+                    "Records found in response: %s",
+                    data['totalRecords'])
             return data
         except requests.exceptions.RequestException as e:
             logger.error("Error during GET request to %s: %s",
@@ -124,7 +132,11 @@ class FolioConnector:
         logger.info("Performing POST request to URL: %s with body: %s",
                     url, body)
         try:
-            r = requests.post(url, json=body, cookies=self.__auth_cookie, timeout=30)
+            r = requests.post(
+                url,
+                json=body,
+                cookies=self.__auth_cookie,
+                timeout=30)
             r.raise_for_status()
             data = r.json()
             logger.info("POST request successful. Data retrieved: %s", data)

@@ -1,6 +1,7 @@
 """
  This class provides methods to write, update, and delete rows in an AirTable table.
 """
+# pylint: disable=R0801
 import logging
 from pyairtable import Api
 from pyairtable.formulas import match
@@ -17,6 +18,7 @@ class AirTableConnector:
     - update_rows: Update rows in the AirTable table based on the filter string.
     - delete_rows: Delete rows from the AirTable based on the filter string.
     """
+
     def __init__(self, env_key: str):
         logger.info("Initializing AirTableConnector with env_key: %s", env_key)
         api = Api(EnvLoader().get(name=f"{env_key}_API_KEY"))
@@ -47,7 +49,10 @@ class AirTableConnector:
         :param filter_string: The field to filter the rows.
         :return: The results of the update.
         """
-        logger.info("Updating rows in AirTable. Filter: %s, Data: %s", filter_string, data)
+        logger.info(
+            "Updating rows in AirTable. Filter: %s, Data: %s",
+            filter_string,
+            data)
         results = []
         try:
             for item in data:
@@ -72,7 +77,10 @@ class AirTableConnector:
         :param filter_string: The field name to filter by.
         :return: The results of the deletion.
         """
-        logger.info("Deleting rows from AirTable. Filter: %s, Data: %s", filter_string, data)
+        logger.info(
+            "Deleting rows from AirTable. Filter: %s, Data: %s",
+            filter_string,
+            data)
         results = []
         try:
             for item in data:

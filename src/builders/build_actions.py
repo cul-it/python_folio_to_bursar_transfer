@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
+"""
+BuildActions class
+This class is responsible for processing fines based on the configuration file.
+It loads and runs actions on the Fee/Fines and Usr data in FOLIO.
+"""
+# pylint: disable=R0801,too-few-public-methods
 import json
-import os
 import logging
 import importlib
-import sys
 from src.shared.data_processor import DataProcessor  # Import the new class
 from src.shared.env_loader import EnvLoader
 from src.shared.common_helpers import pascal_to_camel_case
@@ -16,10 +20,12 @@ class BuildActions:
     This class is responsible for processing fines based on the configuration file.
     exposed methods:
         get_process_data() -> dict: This function retrieves the processed fine data.
-    Internal methods:   
-        __process_fines( fines: dict, settings: dict, trans_active: boolean) -> list: This function processes the fines based on the configuration file.
+    Internal methods:
+        __process_fines( fines: dict, settings: dict, trans_active: boolean) ->
+            list: This function processes the fines based on the configuration file.
 
     """
+
     def __init__(self, connector, fines, settings, trans_active):
         """
         Initialize the BuildActions class.
@@ -43,17 +49,21 @@ class BuildActions:
                         config["filters"]) > 0:
                     for f in config["filters"]:
                         logger.debug("Applying filter: %s", f)
-                        filter = json.loads(EnvLoader().get(name=f))
+                        fine_filter = json.loads(EnvLoader().get(name=f))
                         working_fines = self.__data_processor.general_filter_function(
-                            working_fines, filter)
+                            working_fines, fine_filter)
                 working_fines = self.__process_fine(
                     working_fines, config, trans_active)
                 self.return_data[config["name"]] = working_fines
-                logger.info("Processed fines for configuration: %s", config["name"])
+                logger.info(
+                    "Processed fines for configuration: %s",
+                    config["name"])
                 if 'stop_processing' in config and config['stop_processing']:
                     fines = [
                         item for item in fines if item not in working_fines]
-                    logger.debug("Stopped processing remaining fines for configuration: %s", config["name"])
+                    logger.debug(
+                        "Stopped processing remaining fines for configuration: %s",
+                        config["name"])
         logger.info("BuildActions initialization complete.")
 
     def get_process_data(self):
@@ -69,24 +79,31 @@ class BuildActions:
         This function processes the fines based on the configuration file.
         :param fines: The list of fines to be processed.
         :param settings: The configuration settings for the job.
-        :param trans_active: Is the transfer active form the jobs.yaml setting profile.        
+        :param trans_active: Is the transfer active form the jobs.yaml setting profile.
         :return: A list of processed fines.
         """
         logger.info("Processing fines with settings: %s", conf["name"])
 
         try:
             # Dynamically import the connector class
-            module_name = f"src.actions.{pascal_to_camel_case(conf['action_type'])}"
+            module_name = f"src.actions.{
+                pascal_to_camel_case(
+                    conf['action_type'])}"
             class_name = conf['action_type']
             module = importlib.import_module(module_name)
             connector_class = getattr(module, class_name)
         except (ModuleNotFoundError, AttributeError) as e:
-            logger.error("Failed to load connector class for type: %s. Error: %s",
-                         conf['action_type'], e)
-            raise ValueError(f"Invalid connector type: {conf['action_type']}")
+            logger.error(
+                "Failed to load connector class for type: %s. Error: %s",
+                conf['action_type'],
+                e)
+            raise ValueError(
+                f"Invalid connector type: {
+                    conf['action_type']}") from e
 
         # Initialize the connector instance
-        connector_instance = connector_class(conf, self.__connector, trans_active)
+        connector_instance = connector_class(
+            conf, self.__connector, trans_active)
         logger.info("sending to %s.", conf['action_type'])
 
         for fine in fines:

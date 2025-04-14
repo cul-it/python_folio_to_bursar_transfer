@@ -11,18 +11,18 @@ from datetime import date
 
 logger = logging.getLogger(__name__)
 
+
 def pascal_to_camel_case(pascal_string):
     """Converts a PascalCase string to camelCase.
-    
+
     Args:
         pascal_string: The PascalCase string to convert.
-    
+
     Returns:
         The camelCase version of the string.
     """
     snake_case = re.sub(r'(?<!^)(?=[A-Z])', '_', pascal_string).lower()
     return snake_case
-
 
 
 def generate_file_name(conf):

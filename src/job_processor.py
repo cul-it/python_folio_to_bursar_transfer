@@ -16,6 +16,7 @@ from src.builders.build_connectors import SendToConnecter
 
 logger = logging.getLogger(__name__)
 
+
 def catch_exception(method):
     """
     Decorator to catch exceptions in methods.
@@ -28,13 +29,14 @@ def catch_exception(method):
     def wrapper(*args, **kwargs):
         try:
             return method(*args, **kwargs)
-        except Exception as e: #pylint: disable=broad-except
+        except Exception as e:  # pylint: disable=broad-except
             print(f"Exception in {method.__name__}: {e}")
             # Handle the exception or re-raise it if necessary
             # raise  # Uncomment to re-raise the exception after logging
-            return None # Or return a default value
+            return None  # Or return a default value
 
     return wrapper
+
 
 class JobProcessor:
     """
@@ -82,7 +84,8 @@ class JobProcessor:
                 logger.debug("Job configuration: %s",
                              settings)
 
-                # set up the connector to FOLIO -- this is used by all functions to
+                # set up the connector to FOLIO -- this is used by all
+                # functions to
                 connector = FolioConnector(job)
                 logger.info("Connector initialized.")
 
@@ -90,13 +93,13 @@ class JobProcessor:
                 logger.info("Building charge data.")
                 charge_data = BuildCharges(connector, settings).get_charges()
                 logger.debug("Charge data %s",
-                            charge_data)
+                             charge_data)
 
                 # Build the credit data
                 logger.info("Building credit data.")
                 refund_data = BuildCredits(connector, settings).get_credits()
                 logger.debug("Refund data %s",
-                            refund_data)
+                             refund_data)
 
                 # Process the Fine data
                 logger.info("Processing fine data.")
@@ -109,7 +112,7 @@ class JobProcessor:
                     settings,
                     trans_active).get_process_data()
                 logger.debug("Process data %s",
-                            process_data)
+                             process_data)
 
                 # Build the export data
                 working_data = {
@@ -119,11 +122,11 @@ class JobProcessor:
                 }
                 ExportData(working_data, settings)
                 logger.info("Job %s processed successfully.",
-                    job.get('name', 'Unnamed Test Job'))
+                            job.get('name', 'Unnamed Test Job'))
 
                 SendToConnecter(working_data, settings)
                 logger.info("Data sent to connector successfully.")
-            except Exception as e: #pylint: disable=broad-except
+            except Exception as e:  # pylint: disable=broad-except
                 logger.error("Error processing job '%s': %s",
                              job.get('name', 'Unnamed Job'), e,
                              exc_info=True)
@@ -152,11 +155,11 @@ class JobProcessor:
 
             # Build the charge data
             charge_data = BuildCharges(connector, settings).get_charges()
-            logger.debug("Charge data: %s",charge_data)
+            logger.debug("Charge data: %s", charge_data)
 
             # Build the credit data
             refund_data = BuildCredits(connector, settings).get_credits()
-            logger.debug("Refund data: %s",refund_data)
+            logger.debug("Refund data: %s", refund_data)
 
             # Process the Fine data
             process_data = BuildActions(
@@ -164,7 +167,7 @@ class JobProcessor:
                 charge_data["data"],
                 settings,
                 False).get_process_data()
-            logger.debug("Process data: %s",process_data)
+            logger.debug("Process data: %s", process_data)
 
             # Build the export data
             working_data = {
@@ -174,11 +177,11 @@ class JobProcessor:
             }
             ExportData(working_data, settings)
             logger.info("Job %s processed successfully.",
-                job.get('name', 'Unnamed Test Job'))
-        except Exception as e: #pylint: disable=broad-except
+                        job.get('name', 'Unnamed Test Job'))
+        except Exception as e:  # pylint: disable=broad-except
             logger.error("Error processing job '%s': %s",
-                            job.get('name', 'Unnamed Job'), e,
-                            exc_info=True)
+                         job.get('name', 'Unnamed Job'), e,
+                         exc_info=True)
             raise e
 
     def __check_days(self, job):
@@ -208,7 +211,7 @@ class JobProcessor:
         return rtn_check
 
     def __check_month(self, job):
-        """ 
+        """
         This function checks if the job should run on the current month.
         It checks the 'run_on_month' field in the job configuration.
 
@@ -282,7 +285,8 @@ class JobProcessor:
             today = date.today()
             check_day = int(today.strftime("%d"))
             if not isinstance(job['run_on_day'], (list, str)):
-                logger.error("Invalid type for 'run_on_day'. Expected list or string.")
+                logger.error(
+                    "Invalid type for 'run_on_day'. Expected list or string.")
                 logger.debug("Job run days of the month: %s",
                              job.get('run_on_day', 'No run days specified'))
                 raise ValueError(

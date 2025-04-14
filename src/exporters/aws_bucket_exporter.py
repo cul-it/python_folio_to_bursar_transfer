@@ -1,9 +1,13 @@
 # -*- coding: utf-8 -*-
+"""
+# AWS S3 Exporter"""
+# pylint: disable=R0801,too-few-public-methods
 import logging
 from src.uploaders.aws_bucket import S3Uploader
 from src.shared.common_helpers import generate_file_name
 
 logger = logging.getLogger(__name__)
+
 
 class AwsBucketExporter:
     """
@@ -13,7 +17,8 @@ class AwsBucketExporter:
     def __init__(self, conf, template_processor):
         """
         Initialize the AwsBucketExporter with the bucket name and AWS credentials.
-        :param env_key: The environment key used in the .env file to retrieve S3 bucket and credentials.
+        :param env_key: The environment key used in the .env file to retrieve S3 
+            bucket and credentials.
         """
         self.__s3_uploader = S3Uploader(env_key=conf['env_key'])
         self.__conf = conf
@@ -25,7 +30,8 @@ class AwsBucketExporter:
         :return: True if the upload was successful, False otherwise.
         """
         logger.info("Processing export configuration: %s", self.__conf)
-        processed_data = self.__template_processor.process_template(self.__conf)
+        processed_data = self.__template_processor.process_template(
+            self.__conf)
         file_name = generate_file_name(self.__conf)
         logger.debug("Processed file name: %s", file_name)
 

@@ -1,4 +1,4 @@
-"""File loader module for loading files from a given directory 
+"""File loader module for loading files from a given directory
 or from an S3 Bucket depending on the conf settings.
 """
 import os
@@ -48,9 +48,11 @@ class FileLoader:  # pylint: disable=too-few-public-methods
                     logger.debug("Loading file from S3 bucket.")
                     return self.__load_s3_file(file_name)
                 case _:
-                    logger.error("Unsupported file type specified in configuration: %s",
-                                 self.__conf['type'])
-                    raise ValueError("Unsupported file type specified in configuration.")
+                    logger.error(
+                        "Unsupported file type specified in configuration: %s",
+                        self.__conf['type'])
+                    raise ValueError(
+                        "Unsupported file type specified in configuration.")
         except Exception as e:
             logger.error("Error loading file '%s': %s",
                          file_name, e, exc_info=True)
@@ -61,7 +63,10 @@ class FileLoader:  # pylint: disable=too-few-public-methods
         Load a file from the local directory.
         :return: The loaded file.
         """
-        file_path = os.path.join(self.__script_dir, self.__conf['location'], file_name)
+        file_path = os.path.join(
+            self.__script_dir,
+            self.__conf['location'],
+            file_name)
         logger.debug("Resolved local file path: %s",
                      file_path)
         if not os.path.exists(file_path):

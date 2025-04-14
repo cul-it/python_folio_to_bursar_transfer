@@ -1,9 +1,15 @@
 # -*- coding: utf-8 -*-
+"""
+Local Exporter Module
+This module provides functionality to export data to the local file system.
+"""
+# pylint: disable=R0801,too-few-public-methods
 import os
 import logging
 from src.shared.common_helpers import generate_file_name
 
 logger = logging.getLogger(__name__)
+
 
 class LocalExporter:
     """
@@ -12,8 +18,9 @@ class LocalExporter:
 
     def __init__(self, conf, template_processor):
         """
-        Initialize the AwsBucketExporter with the bucket name and AWS credentials.
-        :param env_key: The environment key used in the .env file to retrieve S3 bucket and credentials.
+        Initialize the LocalExporter class.
+        :param conf: Configuration dictionary for the export.
+        :param template_processor: Template processor for processing templates.
         """
         self.__script_dir = os.path.dirname(__file__)
         self.__conf = conf
@@ -25,7 +32,8 @@ class LocalExporter:
         :return: True if the upload was successful, False otherwise.
         """
         logger.info("Processing export configuration: %s", self.__conf)
-        processed_data = self.__template_processor.process_template(self.__conf)
+        processed_data = self.__template_processor.process_template(
+            self.__conf)
         file_name = generate_file_name(self.__conf)
         logger.debug("Processed file name: %s", file_name)
 
@@ -34,7 +42,7 @@ class LocalExporter:
             self.__script_dir, '../..',
             self.__conf['export_to'],
             file_name)
-        with open(output_location, 'w') as file: #pylint: disable=unspecified-encoding
+        with open(output_location, 'w') as file:  # pylint: disable=unspecified-encoding
             file.write(processed_data)
         logger.debug("File saved locally at: %s", output_location)
 

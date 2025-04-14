@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
+"""
+    This module is responsible for exporting data to various destinations.
+    It dynamically loads the appropriate exporter class based on the
+"""
+# pylint: disable=R0801, too-few-public-methods
 import logging
 import importlib
-from pybars import Compiler
 # Utilities
 from src.shared.env_loader import EnvLoader
 from src.shared.file_loader import FileLoader
@@ -12,11 +16,18 @@ logger = logging.getLogger(__name__)
 
 
 class ExportData:
+    """
+        Build the export functions
+        public methods:
+            __init__(self, working_data, settings)
+        private methods:
+            __ship_package(self, conf)
+    """
 
     def __init__(self, working_data, settings):
         """
         Initialize the ExportData class.
-        :param working_data: the three data files combined into a 
+        :param working_data: the three data files combined into a
             single package for processing.
         :param settings: The configuration settings for the job.
         """
@@ -34,14 +45,17 @@ class ExportData:
                 default="local")
         }
         file_loader = FileLoader(template_conf)
-        self.__template_processor = TemplateProcessor(working_data, file_loader)
-        logger.info("ExportData initialized with configuration: %s", template_conf)
+        self.__template_processor = TemplateProcessor(
+            working_data, file_loader)
+        logger.info(
+            "ExportData initialized with configuration: %s",
+            template_conf)
 
         if 'export' in settings and settings['export'] is not None:
             for conf in settings['export']:
                 self.__ship_package(conf)
                 logger.info("Shipping package with configuration: %s", conf)
-                
+
     def __ship_package(self, conf):
         """
         This function is responsible for shipping the package.
@@ -51,17 +65,22 @@ class ExportData:
 
         try:
             # Dynamically import the connector class
-            module_name = f"src.exporters.{pascal_to_camel_case(conf['export_type'])}"
+            module_name = f"src.exporters.{
+                pascal_to_camel_case(
+                    conf['export_type'])}"
             class_name = conf['export_type']
             module = importlib.import_module(module_name)
             connector_class = getattr(module, class_name)
         except (ModuleNotFoundError, AttributeError) as e:
-            logger.error("Failed to load connector class for type: %s. Error: %s",
-                         conf['export_type'], e)
-            raise ValueError(f"Invalid connector type: {conf['export_type']}")
+            logger.error(
+                "Failed to load connector class for type: %s. Error: %s",
+                conf['export_type'],
+                e)
+            raise ValueError(f"Invalid connector type: {conf['export_type']}") from e
 
         # Initialize the connector instance
-        connector_instance = connector_class(conf=conf, template_processor=self.__template_processor)
+        connector_instance = connector_class(
+            conf=conf, template_processor=self.__template_processor)
         logger.info("Uploading to %s.", conf['export_type'])
         # Execute the action
 

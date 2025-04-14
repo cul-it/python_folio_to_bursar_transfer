@@ -1,7 +1,6 @@
 """Python script to send emails using Microsoft Graph API with OAuth2 authentication."""
-import re
+# pylint: disable=R0801
 import logging
-from io import BytesIO
 from O365 import Account, FileSystemTokenBackend
 from O365.utils import AWSS3Backend
 from src.uploaders.o365_backends import CustomAwsS3Backend
@@ -30,16 +29,16 @@ class SharePointConnection:
             case 'LOCAL':
                 logger.info("Loading local credentials...")
                 token_backend = FileSystemTokenBackend(
-                    token_path=EnvLoader().get(name=f"{connection_id}_AUTH_PATH"),
-                    token_filename=f"{connection_id}_TOKEN.json"
-                )
+                    token_path=EnvLoader().get(
+                        name=f"{connection_id}_AUTH_PATH"),
+                    token_filename=f"{connection_id}_TOKEN.json")
             case 'S3':
                 if EnvLoader().get(name=f"{connection_id}_SECURE"):
                     logger.info("Loading AWS credentials from S3 bucket.")
                     token_backend = CustomAwsS3Backend(
-                        env_key=EnvLoader().get(name=f"{connection_id}_AUTH_PATH"),
-                        filename=f"{connection_id}_TOKEN.json"
-                    )
+                        env_key=EnvLoader().get(
+                            name=f"{connection_id}_AUTH_PATH"),
+                        filename=f"{connection_id}_TOKEN.json")
                 else:
                     logger.info(
                         "Loading AWS credentials from Lambda function.")
@@ -52,16 +51,18 @@ class SharePointConnection:
                     "Invalid AUTH_LOCATION. Must be 'LOCAL' or 'AWS'.")
                 raise ValueError(
                     "Invalid AUTH_LOCATION. Must be 'LOCAL' or 'AWS'.")
-                    
-        acct = Account(credentials, token_backend=token_backend, raise_http_errors=False)
+
+        acct = Account(
+            credentials,
+            token_backend=token_backend,
+            raise_http_errors=False)
 
         sp_site = acct.sharepoint().get_site(
-                EnvLoader().get(name=f"{env_key}_SITE")
-            )
+            EnvLoader().get(name=f"{env_key}_SITE")
+        )
         self.__sp_list = sp_site.get_list_by_name(
-                EnvLoader().get(name=f"{env_key}_LIST")
-            )
-    
+            EnvLoader().get(name=f"{env_key}_LIST")
+        )
 
     def write_rows(self, data):
         """
@@ -89,7 +90,10 @@ class SharePointConnection:
         :param filter_string: The field to filter the rows.
         :return: The results of the update.
         """
-        logger.info("Updating rows in SharePoint. Filter: %s, Data: %s", filter_string, data)
+        logger.info(
+            "Updating rows in SharePoint. Filter: %s, Data: %s",
+            filter_string,
+            data)
         results = []
         try:
             for item in data:
@@ -115,11 +119,14 @@ class SharePointConnection:
         :param filter_string: The field name to filter by.
         :return: The results of the deletion.
         """
-        logger.info("Deleting rows from SharePoint. Filter: %s, Data: %s", filter_string, data)
+        logger.info(
+            "Deleting rows from SharePoint. Filter: %s, Data: %s",
+            filter_string,
+            data)
         results = []
         try:
             for item in data:
-                formula =  f"fields/{filter_string} eq '{item[filter_string]}'"
+                formula = f"fields/{filter_string} eq '{item[filter_string]}'"
                 logger.debug("Generated formula for deletion: %s", formula)
                 list_items = self.__sp_list.get_items(query=formula)
                 if list_items:

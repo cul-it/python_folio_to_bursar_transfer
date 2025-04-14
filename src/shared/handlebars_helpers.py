@@ -2,13 +2,13 @@
 """
 This module contains helper functions for handlebars templates.
 exposed methods:
-    left_pad(context, value: string, width: int, char: string) -> string: 
+    left_pad(context, value: string, width: int, char: string) -> string:
         Left pad a value with a character to a specified width.
-    right_pad(context, value: string, width: int, char: string) -> string: 
+    right_pad(context, value: string, width: int, char: string) -> string:
         Right pad a value with a character to a specified width.
-    format_date(context, value: string, format: string, import_format: boolean) 
+    format_date(context, value: string, format: string, import_format: boolean)
         -> string: Format a date string to a specified format.
-    format_money(context, value: string) -> string: Format a number to a 
+    format_money(context, value: string) -> string: Format a number to a
         currency string with two decimal places.
 Usage:
     {{left_pad <<FIELD>> 10 "0"}}
@@ -17,13 +17,15 @@ Usage:
     {{format_date <<FIELD>> "%Y-%m-%d" import_format="%Y-%m-%dT%H:%M:%S.%fZ"}}
     {{format_money <<FIELD>>}}
 """
-
+# pylint: disable=unused-argument
 import logging
 from datetime import date, datetime
 
 logger = logging.getLogger(__name__)
 
 # pylint: disable-next=unused-argument
+
+
 def left_pad(context, value, width=5, char=' '):
     """
     Left pad a value with a character to a specified width. (Required by handlebars)
@@ -38,6 +40,8 @@ def left_pad(context, value, width=5, char=' '):
     return str(value).rjust(width, char)
 
 # pylint: disable-next=unused-argument
+
+
 def right_pad(context, value, width=5, char=' '):
     """
     Right pad a value with a character to a specified width. (Required by handlebars)
@@ -52,6 +56,8 @@ def right_pad(context, value, width=5, char=' '):
     return str(value).ljust(width, char)
 
 # pylint: disable-next=unused-argument
+
+
 def format_date(context, value, output_format='%Y-%m-%d', import_format=False):
     """
     Format a date string to a specified format.
@@ -61,8 +67,11 @@ def format_date(context, value, output_format='%Y-%m-%d', import_format=False):
     :param import_format: The format to parse the date string. :default False
     :return: The formatted date string.
     """
-    logger.info("Running format_date with value: %s, output_format: %s, import_format: %s",
-                value, output_format, import_format)
+    logger.info(
+        "Running format_date with value: %s, output_format: %s, import_format: %s",
+        value,
+        output_format,
+        import_format)
     if value.upper() == "NOW":
         wrk_date = date.today()
         logger.debug("Using current date: %s", wrk_date)
@@ -71,8 +80,11 @@ def format_date(context, value, output_format='%Y-%m-%d', import_format=False):
             wrk_date = datetime.strptime(value, import_format).date()
             logger.debug("Parsed date with import_format: %s", wrk_date)
         except ValueError as exc:
-            logger.error("Invalid date format for value: %s with import_format: %s",
-                         value, import_format, exc_info=True)
+            logger.error(
+                "Invalid date format for value: %s with import_format: %s",
+                value,
+                import_format,
+                exc_info=True)
             raise ValueError("Invalid date format") from exc
     else:
         try:
@@ -87,6 +99,8 @@ def format_date(context, value, output_format='%Y-%m-%d', import_format=False):
     return formatted_date
 
 # pylint: disable-next=unused-argument
+
+
 def format_money(context, value):
     """
     Format a number to a currency string with two decimal places.

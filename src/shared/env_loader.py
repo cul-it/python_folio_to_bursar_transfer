@@ -51,20 +51,24 @@ class EnvLoader:  # pylint: disable=too-few-public-methods
         # Check in .env file or system environment variables
         value = os.getenv(name)
         if value is not None:
-            logger.info("Environment variable '%s' found in .env or system variables.",
-                        name)
+            logger.info(
+                "Environment variable '%s' found in .env or system variables.",
+                name)
             return value
 
         # Check in Docker environment variables
         docker_value = self._get_docker_env(name)
         if docker_value is not None:
-            logger.info("Environment variable '%s' found in Docker environment variables.",
-                        name)
+            logger.info(
+                "Environment variable '%s' found in Docker environment variables.",
+                name)
             return docker_value
 
         # Return the default value if not found
-        logger.warning("Environment variable '%s' not found. Returning default value: %s",
-                       name, default)
+        logger.warning(
+            "Environment variable '%s' not found. Returning default value: %s",
+            name,
+            default)
         return default
 
     def _get_docker_env(self, name):
@@ -79,19 +83,20 @@ class EnvLoader:  # pylint: disable=too-few-public-methods
             # Check if running in a Docker container by looking for
             # Docker-specific environment variables
             if not os.path.exists("/proc/1/environ"):
-                logger.debug("Not running in a Docker container. /proc/1/environ not found.")
+                logger.debug(
+                    "Not running in a Docker container. /proc/1/environ not found.")
                 return None
 
             with open("/proc/1/environ", "r", encoding="utf-8") as f:
                 env_data = f.read()
-                env_vars = dict(
-                    line.split("=", 1) for line in env_data.split("\0") if "=" in line
-                )
-                logger.info("Docker environment variable '%s' retrieved successfully.",
-                            name)
+                env_vars = dict(line.split("=", 1)
+                                for line in env_data.split("\0") if "=" in line)
+                logger.info(
+                    "Docker environment variable '%s' retrieved successfully.", name)
                 return env_vars.get(name)
         except FileNotFoundError:
-            logger.debug("Not running in a Docker container. /proc/1/environ not found.")
+            logger.debug(
+                "Not running in a Docker container. /proc/1/environ not found.")
             return None
         except Exception as e:  # pylint: disable=broad-except
             logger.error("Error reading Docker environment variables: %s",

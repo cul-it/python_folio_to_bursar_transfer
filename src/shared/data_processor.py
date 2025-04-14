@@ -16,17 +16,17 @@ class DataProcessor:
     init:
         script_dir : str - The directory of the script that is calling the data processor.
     exposed methods:
-        general_filter_function(fines : list, settings : dict) -> list: Runs the filters 
+        general_filter_function(fines : list, settings : dict) -> list: Runs the filters
             based on the YAML configuration files
-        update_field_value(fines : list, settings : dict) -> list: Runs the update function 
+        update_field_value(fines : list, settings : dict) -> list: Runs the update function
             based on the YAML configuration files
-        merge_field_data(fines : list, settings : dict) -> list: Runs the merge function 
+        merge_field_data(fines : list, settings : dict) -> list: Runs the merge function
             based on the YAML configuration files
         gen_data_summary(fine : list, name : str) -> dict: Generates a summary of the data set.
     Internal methods:
         __filter_error(data : dict, settings : dict) -> dict: Collects and formats the error data
             for later use.
-        __filter_get_field_value(data : dict, settings : dict) -> any : Gets the field 
+        __filter_get_field_value(data : dict, settings : dict) -> any : Gets the field
             value from the data set.
         __flatten_array(ary : list) -> list: Flattens an array of dictionaries.
     """
@@ -37,10 +37,15 @@ class DataProcessor:
         self.__error_data = []
         env = EnvLoader()
         conf = {
-            "type": env.get(name="DATA_SETS_FILE_STORAGE_TYPE", default="local").upper(),
-            "connector": env.get(name="DATA_SETS_FILE_STORAGE_CONNECTOR", default="local").upper(),
-            "location": env.get(name="DATA_SETS_FILE_LOCATION", default="local")
-        }
+            "type": env.get(
+                name="DATA_SETS_FILE_STORAGE_TYPE",
+                default="local").upper(),
+            "connector": env.get(
+                name="DATA_SETS_FILE_STORAGE_CONNECTOR",
+                default="local").upper(),
+            "location": env.get(
+                name="DATA_SETS_FILE_LOCATION",
+                default="local")}
         self.__file_loader = FileLoader(conf)
         logger.info("DataProcessor initialized with configuration: %s", conf)
 
@@ -58,7 +63,7 @@ class DataProcessor:
         logger.debug("Returning error data.")
         return self.__error_data
 
-    #pylint: disable-next=inconsistent-return-statements
+    # pylint: disable-next=inconsistent-return-statements
     def general_filter_function(self, fines, settings):
         """
         This function is used to filter the data based on the settings passed in.
@@ -89,7 +94,7 @@ class DataProcessor:
                              settings['load'])
                 test_data = self.__file_loader.load_file(
                     file_name=f"{settings['load']}.json", is_json=True
-                    )
+                )
 
                 if settings['flatten']:
                     logger.debug("Flattening filter data.")
@@ -107,8 +112,8 @@ class DataProcessor:
                         settings['filter_value'],
                         str) and settings['filter_value'].startswith('ENV'):
                     tmp = settings['filter_value'].split('|')
-                    logger.debug("Loading filter value from environment variable: %s",
-                                 tmp[1])
+                    logger.debug(
+                        "Loading filter value from environment variable: %s", tmp[1])
                     filter_value = EnvLoader().get(name=tmp[1])
                 else:
                     filter_value = settings['filter_value']
@@ -192,7 +197,7 @@ class DataProcessor:
         logger.info("Field update complete.")
         return fines
 
-    #pylint: disable-next=inconsistent-return-statements, too-many-locals
+    # pylint: disable-next=inconsistent-return-statements, too-many-locals
     def merge_field_data(self, fines, settings):
         """
         This function is used to merge the data based on the settings passed in.
@@ -223,10 +228,12 @@ class DataProcessor:
                     settings["field_deliminator"]}{
                     current_dict_2[final_old_key_2]}'
         elif settings['merge_type'].upper() == "FILE":
-            logger.debug("Merging fields using external file: %s.json", settings['load'])
+            logger.debug(
+                "Merging fields using external file: %s.json",
+                settings['load'])
             merge_data = self.__file_loader.load_file(
                 file_name=f"{settings['load']}.json", is_json=True
-                )
+            )
             for f in fines:
                 key_value = self.__filter_get_field_value(f, settings)
                 new_keys = settings['new_field'].split('.')

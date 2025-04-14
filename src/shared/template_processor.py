@@ -9,17 +9,19 @@ from src.shared.handlebars_helpers import left_pad, right_pad, format_date, form
 
 logger = logging.getLogger(__name__)
 
+
 class TemplateProcessor:
     """
     A class to process templates using Handlebars and generate output files.
     public methods:
-        - process_template: Processes the template based on the configuration and 
+        - process_template: Processes the template based on the configuration and
             data provided.
-        - process_data: Processes the data based on the specified level and 
+        - process_data: Processes the data based on the specified level and
             return a formatted dictionary.
     private methods:
         - __init__: Initializes the TemplateProcessor class.
     """
+
     def __init__(self, working_data, file_loader):
         """
         Initialize the TemplateProcessor class.
@@ -46,18 +48,22 @@ class TemplateProcessor:
                 'format_date': format_date,
                 'format_money': format_money
             }
-            logger.debug("Processing data for template: %s", conf['template_data'])
+            logger.debug(
+                "Processing data for template: %s",
+                conf['template_data'])
             template_data = self.process_data(conf['template_data'])
 
             if conf['template_name'].upper() == 'DUMP_JSON':
                 logger.debug("Serializing data to JSON format.")
                 processed_data = json.dumps(template_data, indent=4)
             else:
-                logger.debug("Loading template file: %s.handlebars", conf['template_name'])
+                logger.debug(
+                    "Loading template file: %s.handlebars",
+                    conf['template_name'])
                 template = self.__file_loader.load_file(
-                        f'{conf["template_name"]}.handlebars',
-                        is_yaml=False
-                    )
+                    f'{conf["template_name"]}.handlebars',
+                    is_yaml=False
+                )
                 logger.debug("Compiling template with handlebars.")
                 compiled_template = compiler.compile(template)
                 processed_data = compiled_template(
@@ -97,7 +103,10 @@ class TemplateProcessor:
                 case _:
                     logger.error("Invalid export type: %s", level)
                     raise ValueError("Invalid export type")
-            logger.debug("Processed data for level %s: %s", level, template_data)
+            logger.debug(
+                "Processed data for level %s: %s",
+                level,
+                template_data)
             return template_data
         except Exception as e:
             logger.error("Error processing data for level %s: %s", level, e)

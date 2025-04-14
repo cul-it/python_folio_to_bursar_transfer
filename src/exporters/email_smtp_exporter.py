@@ -2,6 +2,7 @@
 This module provides a class to send emails via SMTP with support for
 secure and insecure connections,
 """
+# pylint: disable=R0801
 import re
 import smtplib
 import logging
@@ -35,16 +36,18 @@ class EmailSmtpExporter:
         self.__template_processor = template_processor
 
         logger.info("Initializing SMTPEmailSender with env_key: %s", env_key)
-        self.__smtp_server = EnvLoader().get(name=f"{env_key}_HOST")
-        self.__port = EnvLoader().get(name=f"{env_key}_PORT")
-        self.__username = EnvLoader().get(name=f"{env_key}_USERNAME")
-        self.__password = EnvLoader().get(name=f"{env_key}_PASSWORD")
-        self.__use_tls = EnvLoader().get(name=f"{env_key}_TLS")
+        self.__connection = {
+            "smtp_server": EnvLoader().get(name=f"{env_key}_HOST"),
+            "port": EnvLoader().get(name=f"{env_key}_PORT"),
+            "username": EnvLoader().get(name=f"{env_key}_USERNAME"),
+            "password": EnvLoader().get(name=f"{env_key}_PASSWORD"),
+            "use_tls": EnvLoader().get(name=f"{env_key}_TLS")
+        }
         self.__message = MIMEMultipart()
         self.__message["From"] = EnvLoader().get(
             name=f"{env_key}_DEFAULT_FROM")
         logger.info("SMTPEmailSender initialized with server: %s, port: %s",
-                    self.__smtp_server, self.__port)
+                    self.__connection["smtp_server"], self.__connection["port"])
 
     def build_message(self, to: List[str], subject: str, body: str):
         """
@@ -94,39 +97,45 @@ class EmailSmtpExporter:
         logger.info("Sending email message.")
         try:
             # Connect to the SMTP server
-            with smtplib.SMTP(self.__smtp_server, self.__port) as server:
-                if self.__use_tls:
+            with smtplib.SMTP(self.__connection["smtp_server"],
+                              self.__connection["port"]) as server:
+                if self.__connection["use_tls"]:
                     logger.info("Starting TLS for SMTP connection.")
                     server.starttls()
                 logger.info("Logging in to SMTP server.")
-                server.login(self.__username, self.__password)
+                server.login(self.__connection["username"],
+                             self.__connection["password"])
                 server.send_message(self.__message)
                 logger.info("Email sent successfully.")
         except Exception as e:
             logger.error("Failed to send email: %s", e, exc_info=True)
             raise RuntimeError(f"An error occurred: {e}") from e
-        
 
     def ship_it(self):
+        """
+        Processes the export configuration and sends the email.
+        :return: None
+        """
         logger.info("Processing export configuration: %s", self.__conf)
-        processed_data = self.__template_processor.process_template(self.__conf)
+        processed_data = self.__template_processor.process_template(
+            self.__conf)
         file_name = generate_file_name(self.__conf)
         logger.debug("Processed file name: %s", file_name)
 
         self.build_message(
-                        to=self.__conf['export_to'],
-                        subject=file_name,
-                        body=processed_data
-                    )
-        
+            to=self.__conf['export_to'],
+            subject=file_name,
+            body=processed_data
+        )
 
         if 'attachment' in self.__conf and self.__conf['attachment']:
             logger.debug("Processing email attachments.")
             for attach in self.__conf['attachment']:
                 logger.debug("Processing email attachment: %s", attach)
-                attachment_data = self.__template_processor.process_template(attach)
+                attachment_data = self.__template_processor.process_template(
+                    attach)
                 attachment_name = generate_file_name(attach)
                 self.add_attachment(attachment_data, attachment_name)
-        
+
         self.send_message()
 # End of class SMTPEmailSender
