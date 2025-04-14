@@ -9,7 +9,7 @@ from src.shared.env_loader import EnvLoader
 logger = logging.getLogger(__name__)
 
 
-class AirTableImporter:
+class AirTableConnector:
     """
     A class to handle importing data into AirTable.
     public methods:
@@ -18,12 +18,12 @@ class AirTableImporter:
     - delete_rows: Delete rows from the AirTable based on the filter string.
     """
     def __init__(self, env_key: str):
-        logger.info("Initializing AirTableImporter with env_key: %s", env_key)
+        logger.info("Initializing AirTableConnector with env_key: %s", env_key)
         api = Api(EnvLoader().get(name=f"{env_key}_API_KEY"))
         app_id = EnvLoader().get(name=f"{env_key}_APP_ID")
         table_id = EnvLoader().get(name=f"{env_key}_TABLE_ID")
         self.__table = api.table(app_id, table_id)
-        logger.info("AirTableImporter initialized successfully.")
+        logger.info("AirTableConnector initialized successfully.")
 
     def write_rows(self, data):
         """
@@ -90,4 +90,4 @@ class AirTableImporter:
             logger.error("Error deleting rows from AirTable: %s", e)
             raise
 
-# End of class AirTableImporter
+# End of class AirTableConnector
