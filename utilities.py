@@ -3,7 +3,7 @@ It is not designed to be run on the server.
 """
 import time
 from simple_term_menu import TerminalMenu
-from src.utilities.microsoft_auth import Auth360Account
+from utilities.microsoft_auth import Auth360Account
 
 def main():
     """
