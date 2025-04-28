@@ -160,9 +160,12 @@ class FolioConnector:
             if r.status_code == 401:  # Unauthorized, likely due to token expiration
                 logger.warning("Auth token expired. Attempting to renew token.")
                 self.__renew_token()
-                return self.post_request(url_part, body, allow_errors)  # Retry the request after renewing the token
+                # Retry the request after renewing the token
+                return self.post_request(url_part, body, allow_errors)
             logger.error("Error during POST request to %s: %s", url, e, exc_info=True)
             raise
         except requests.exceptions.RequestException as e:
             logger.error("Error during POST request to %s: %s", url, e, exc_info=True)
             raise
+
+# End of the FolioConnector class

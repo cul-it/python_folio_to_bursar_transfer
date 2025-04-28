@@ -48,8 +48,10 @@ class PayFineAction:
             logger.warning(
                 "Pay not allowed for non-positive amounts. Fine ID: %s",
                 fine.get("id"))
-            fine[self.__conf["name"]]["check"] = {}
-            fine[self.__conf["name"]]["check"]["allowed"] = False
+            fine[self.__conf["name"]]["check"] = {
+                "allowed": False,
+                "message": "Refund not allowed for non-positive amounts."
+            }
         else:
             logger.debug(
                 "Pay allowed for positive amounts. Fine ID: %s",
@@ -61,7 +63,7 @@ class PayFineAction:
                 fine["id"],
                 url)
             try:
-                check_response = self.__connector.post_request(url, body)
+                check_response = self.__connector.post_request(url, body, allow_errors=True)
                 fine[self.__conf["name"]]["check"] = check_response
                 if check_response["allowed"]:
                     logger.info("Pay check passed for fine ID: %s", fine["id"])
