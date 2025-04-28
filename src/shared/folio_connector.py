@@ -42,7 +42,7 @@ class FolioConnector:
             self.__auth_cookie = {
                 'folioAccessToken': cookies['folioAccessToken']}
             self.__renew_cookie = {
-                'folioAccessToken': cookies['folioAccessToken']}
+                'folioRefreshToken': cookies['folioRefreshToken']}
             logger.info("Auth cookie: %s", self.__auth_cookie)
             logger.info("Renew cookie: %s", self.__renew_cookie)
         except Exception as e:
@@ -80,16 +80,32 @@ class FolioConnector:
             raise
         return None
 
-    def __renew_token(self):  # pylint: disable=unused-private-member
+    def __renew_token(self):
         """
-        This function is used to renew the auth token.
+        This function is used to renew the auth token using the folioRefreshToken.
         """
-        logger.info("Renewing auth token.")
+        logger.info("Attempting to renew auth token using refresh token.")
+        url = f"{self.__baseurl}/authn/refresh"
         try:
-            self.__auth_cookie = self.__login()
-            logger.info("Auth token successfully renewed.")
-        except Exception as e:
-            logger.error("Raising exception in Renewing Token: %s", e)
+            r = requests.post(
+                url,
+                cookies=self.__renew_cookie,
+                headers=self.__headers,
+                timeout=30
+            )
+            r.raise_for_status()
+            if r.status_code == 200:
+                cookie_data = {}
+                for cookie in r.cookies:
+                    cookie_data[cookie.name] = cookie.value
+                self.__auth_cookie = {'folioAccessToken': cookie_data['folioAccessToken']}
+                self.__renew_cookie = {'folioRefreshToken': cookie_data['folioRefreshToken']}
+                logger.info("Auth token successfully renewed.")
+            else:
+                logger.warning("Unexpected status code during token renewal: %s", r.status_code)
+                raise RuntimeError("Failed to renew auth token.")
+        except requests.exceptions.RequestException as e:
+            logger.error("Error during token renewal: %s", e, exc_info=True)
             raise
 
     def get_request(self, url_part):
@@ -105,23 +121,19 @@ class FolioConnector:
             r.raise_for_status()
             data = r.json()
             logger.info("GET request successful. Data retrieved: %s", data)
-            if 'errors' in data:
-                logger.warning("Errors found in response: %s", data['errors'])
-            if 'totalRecords' in data:
-                logger.info("Total records found: %s", data['totalRecords'])
-            if 'totalRecords' in data and data['totalRecords'] == 0:
-                logger.warning("No records found in response.")
-            if 'totalRecords' in data and data['totalRecords'] > 0:
-                logger.info(
-                    "Records found in response: %s",
-                    data['totalRecords'])
             return data
+        except requests.exceptions.HTTPError as e:
+            if r.status_code == 401:  # Unauthorized, likely due to token expiration
+                logger.warning("Auth token expired. Attempting to renew token.")
+                self.__renew_token()
+                return self.get_request(url_part)  # Retry the request after renewing the token
+            logger.error("Error during GET request to %s: %s", url, e, exc_info=True)
+            raise
         except requests.exceptions.RequestException as e:
-            logger.error("Error during GET request to %s: %s",
-                         url, e, exc_info=True)
+            logger.error("Error during GET request to %s: %s", url, e, exc_info=True)
             raise
 
-    def post_request(self, url_part, body):
+    def post_request(self, url_part, body, allow_errors=False):
         """
         This function is used perform a post action against the FOLIO API.
         :param url_part: The part of the URL that is specific to the API being called.
@@ -129,22 +141,28 @@ class FolioConnector:
         :return: The data returned from the API.
         """
         url = f'{self.__baseurl}{url_part}'
-        logger.info("Performing POST request to URL: %s with body: %s",
-                    url, body)
+        logger.info("Performing POST request to URL: %s with body: %s", url, body)
         try:
             r = requests.post(
                 url,
                 json=body,
                 cookies=self.__auth_cookie,
-                timeout=30)
-            r.raise_for_status()
+                timeout=30
+            )
+            if not allow_errors or r.status_code not in [422, 404]:
+                r.raise_for_status()
+            else:
+                logger.warning("Ignoring error with status code: %s", r.status_code)
             data = r.json()
             logger.info("POST request successful. Data retrieved: %s", data)
-            if 'errors' in data:
-                logger.warning("Errors found in response: %s", data['errors'])
-
             return data
+        except requests.exceptions.HTTPError as e:
+            if r.status_code == 401:  # Unauthorized, likely due to token expiration
+                logger.warning("Auth token expired. Attempting to renew token.")
+                self.__renew_token()
+                return self.post_request(url_part, body, allow_errors)  # Retry the request after renewing the token
+            logger.error("Error during POST request to %s: %s", url, e, exc_info=True)
+            raise
         except requests.exceptions.RequestException as e:
-            logger.error("Error during GET request to %s: %s",
-                         url, e, exc_info=True)
+            logger.error("Error during POST request to %s: %s", url, e, exc_info=True)
             raise
