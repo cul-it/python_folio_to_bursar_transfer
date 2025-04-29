@@ -4,6 +4,7 @@
     the auth token and to make requests to the FOLIO API.
 """
 import logging
+import time
 import requests
 from src.shared.env_loader import EnvLoader
 
@@ -110,62 +111,120 @@ class FolioConnector:
 
     def get_request(self, url_part):
         """
-        This function is used perform a get action against the FOLIO API.
+        This function is used to perform a GET action against the FOLIO API.
+        Retries up to 4 times if a timeout occurs.
         :param url_part: The part of the URL that is specific to the API being called.
         :return: The data returned from the API.
         """
         url = f'{self.__baseurl}{url_part}'
         logger.info("Performing GET request to URL: %s", url)
-        try:
-            r = requests.get(url, cookies=self.__auth_cookie, timeout=30)
-            r.raise_for_status()
-            data = r.json()
-            logger.info("GET request successful. Data retrieved: %s", data)
-            return data
-        except requests.exceptions.HTTPError as e:
-            if r.status_code == 401:  # Unauthorized, likely due to token expiration
-                logger.warning("Auth token expired. Attempting to renew token.")
-                self.__renew_token()
-                return self.get_request(url_part)  # Retry the request after renewing the token
-            logger.error("Error during GET request to %s: %s", url, e, exc_info=True)
-            raise
-        except requests.exceptions.RequestException as e:
-            logger.error("Error during GET request to %s: %s", url, e, exc_info=True)
-            raise
+        retries = 5
+        for attempt in range(retries):
+            try:
+                r = requests.get(url, cookies=self.__auth_cookie, timeout=30)
+                r.raise_for_status()
+                data = r.json()
+                logger.info("GET request successful. Data retrieved: %s", data)
+                return data
+            except requests.exceptions.Timeout as e:
+                logger.warning("GET request timed out. Attempt %d of %d.", attempt + 1, retries)
+                if attempt < retries - 1:
+                    time.sleep(2 ** attempt)  # Exponential backoff
+                    continue
+                logger.error("GET request failed after %d attempts. Error: %s", retries, e, exc_info=True)
+                raise
+            except requests.exceptions.HTTPError as e:
+                if r.status_code == 401:  # Unauthorized, likely due to token expiration
+                    logger.warning("Auth token expired. Attempting to renew token.")
+                    self.__renew_token()
+                    return self.get_request(url_part)  # Retry the request after renewing the token
+                logger.error("Error during GET request to %s: %s", url, e, exc_info=True)
+                raise
+            except requests.exceptions.RequestException as e:
+                logger.error("Error during GET request to %s: %s", url, e, exc_info=True)
+                raise
 
     def post_request(self, url_part, body, allow_errors=False):
         """
-        This function is used perform a post action against the FOLIO API.
+        This function is used to perform a POST action against the FOLIO API.
+        Retries up to 4 times if a timeout occurs.
         :param url_part: The part of the URL that is specific to the API being called.
         :param body: The body of the request.
         :return: The data returned from the API.
         """
         url = f'{self.__baseurl}{url_part}'
         logger.info("Performing POST request to URL: %s with body: %s", url, body)
-        try:
-            r = requests.post(
-                url,
-                json=body,
-                cookies=self.__auth_cookie,
-                timeout=30
-            )
-            if not allow_errors or r.status_code not in [422, 404]:
+        retries = 5
+        for attempt in range(retries):
+            try:
+                r = requests.post(
+                    url,
+                    json=body,
+                    cookies=self.__auth_cookie,
+                    timeout=30
+                )
+                if not allow_errors or r.status_code not in [422, 404]:
+                    r.raise_for_status()
+                else:
+                    logger.warning("Ignoring error with status code: %s", r.status_code)
+                data = r.json()
+                logger.info("POST request successful. Data retrieved: %s", data)
+                return data
+            except requests.exceptions.Timeout as e:
+                logger.warning("POST request timed out. Attempt %d of %d.", attempt + 1, retries)
+                if attempt < retries - 1:
+                    time.sleep(2 ** attempt)  # Exponential backoff
+                    continue
+                logger.error("POST request failed after %d attempts. Error: %s", retries, e, exc_info=True)
+                raise
+            except requests.exceptions.HTTPError as e:
+                if r.status_code == 401:  # Unauthorized, likely due to token expiration
+                    logger.warning("Auth token expired. Attempting to renew token.")
+                    self.__renew_token()
+                    return self.post_request(url_part, body, allow_errors)  # Retry the request after renewing the token
+                logger.error("Error during POST request to %s: %s", url, e, exc_info=True)
+                raise
+            except requests.exceptions.RequestException as e:
+                logger.error("Error during POST request to %s: %s", url, e, exc_info=True)
+                raise
+
+    def delete_request(self, url_part):
+        """
+        This function is used to perform a DELETE action against the FOLIO API.
+        Retries up to 4 times if a timeout occurs.
+        :param url_part: The part of the URL that is specific to the API being called.
+        :return: The data returned from the API.
+        """
+        url = f'{self.__baseurl}{url_part}'
+        logger.info("Performing DELETE request to URL: %s", url)
+        retries = 5
+        for attempt in range(retries):
+            try:
+                r = requests.delete(
+                    url,
+                    cookies=self.__auth_cookie,
+                    timeout=30
+                )
                 r.raise_for_status()
-            else:
-                logger.warning("Ignoring error with status code: %s", r.status_code)
-            data = r.json()
-            logger.info("POST request successful. Data retrieved: %s", data)
-            return data
-        except requests.exceptions.HTTPError as e:
-            if r.status_code == 401:  # Unauthorized, likely due to token expiration
-                logger.warning("Auth token expired. Attempting to renew token.")
-                self.__renew_token()
-                # Retry the request after renewing the token
-                return self.post_request(url_part, body, allow_errors)
-            logger.error("Error during POST request to %s: %s", url, e, exc_info=True)
-            raise
-        except requests.exceptions.RequestException as e:
-            logger.error("Error during POST request to %s: %s", url, e, exc_info=True)
-            raise
+                data = r.json()
+                logger.info("DELETE request successful. Data retrieved: %s", data)
+                return data
+            except requests.exceptions.Timeout as e:
+                logger.warning("DELETE request timed out. Attempt %d of %d.", attempt + 1, retries)
+                if attempt < retries - 1:
+                    time.sleep(2 ** attempt)  # Exponential backoff
+                    continue
+                logger.error("DELETE request failed after %d attempts. Error: %s", retries, e, exc_info=True)
+                raise
+            except requests.exceptions.HTTPError as e:
+                if r.status_code == 401:
+                    logger.warning("Auth token expired. Attempting to renew token.")
+                    self.__renew_token()
+                    return self.delete_request(url_part)
+                logger.error("Error during DELETE request to %s: %s", url, e, exc_info=True)
+                raise
+            except requests.exceptions.RequestException as e:
+                logger.error("Error during DELETE request to %s: %s", url, e, exc_info=True)
+                raise
 
 # End of the FolioConnector class
