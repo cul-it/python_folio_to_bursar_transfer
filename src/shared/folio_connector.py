@@ -131,7 +131,8 @@ class FolioConnector:
                 if attempt < retries - 1:
                     time.sleep(2 ** attempt)  # Exponential backoff
                     continue
-                logger.error("GET request failed after %d attempts. Error: %s", retries, e, exc_info=True)
+                logger.error("GET request failed after %d attempts. Error: %s",
+                             retries, e, exc_info=True)
                 raise
             except requests.exceptions.HTTPError as e:
                 if r.status_code == 401:  # Unauthorized, likely due to token expiration
@@ -175,13 +176,15 @@ class FolioConnector:
                 if attempt < retries - 1:
                     time.sleep(2 ** attempt)  # Exponential backoff
                     continue
-                logger.error("POST request failed after %d attempts. Error: %s", retries, e, exc_info=True)
+                logger.error("POST request failed after %d attempts. Error: %s",
+                             retries, e, exc_info=True)
                 raise
             except requests.exceptions.HTTPError as e:
                 if r.status_code == 401:  # Unauthorized, likely due to token expiration
                     logger.warning("Auth token expired. Attempting to renew token.")
                     self.__renew_token()
-                    return self.post_request(url_part, body, allow_errors)  # Retry the request after renewing the token
+                    # Retry the request after renewing the token
+                    return self.post_request(url_part, body, allow_errors) 
                 logger.error("Error during POST request to %s: %s", url, e, exc_info=True)
                 raise
             except requests.exceptions.RequestException as e:
@@ -214,7 +217,8 @@ class FolioConnector:
                 if attempt < retries - 1:
                     time.sleep(2 ** attempt)  # Exponential backoff
                     continue
-                logger.error("DELETE request failed after %d attempts. Error: %s", retries, e, exc_info=True)
+                logger.error("DELETE request failed after %d attempts. Error: %s",
+                             retries, e, exc_info=True)
                 raise
             except requests.exceptions.HTTPError as e:
                 if r.status_code == 401:
