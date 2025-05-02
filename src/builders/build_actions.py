@@ -26,7 +26,7 @@ class BuildActions:
 
     """
 
-    def __init__(self, connector, fines, settings, trans_active):
+    def __init__(self, connector, working_data, settings, trans_active):
         """
         Initialize the BuildActions class.
         :param connector: The connector to the FOLIO system.
@@ -36,7 +36,11 @@ class BuildActions:
         """
         logger.info("Initializing BuildActions.")
         self.__connector = connector
-        self.__data_processor = DataProcessor()  # Initialize DataProcessor
+        self.__data_processor = DataProcessor(connector)  # Initialize DataProcessor
+        self.__working_data = working_data
+
+        working_fines = working_data["charge_data"]["data"]
+        working_refunds = working_data["refund_data"]["data"]
 
         self.return_data = {}
         logger.info("Checking for actions in settings.")
@@ -44,23 +48,28 @@ class BuildActions:
                 settings["actions"]) > 0:
             for config in settings['actions']:
                 logger.info("Processing configuration: %s", config["name"])
-                working_fines = fines
+                if config["action_on"].upper() == "CREDITS":
+                    logger.info("Processing refunds.")
+                    working_data = working_refunds
+                else:
+                    logger.info("Processing fines.")
+                    working_data = working_fines
                 if 'filters' in config and config["filters"] and len(
                         config["filters"]) > 0:
                     for f in config["filters"]:
                         logger.debug("Applying filter: %s", f)
                         fine_filter = json.loads(EnvLoader().get(name=f))
-                        working_fines = self.__data_processor.general_filter_function(
-                            working_fines, fine_filter)
-                working_fines = self.__process_fine(
-                    working_fines, config, trans_active)
-                self.return_data[config["name"]] = working_fines
+                        working_data = self.__data_processor.general_filter_function(
+                            working_data, fine_filter)
+                working_data = self.__process_fine(
+                    working_data, config, trans_active)
+                self.return_data[config["name"]] = working_data
                 logger.info(
                     "Processed fines for configuration: %s",
                     config["name"])
                 if 'stop_processing' in config and config['stop_processing']:
                     fines = [
-                        item for item in fines if item not in working_fines]
+                        item for item in fines if item not in working_data]
                     logger.debug(
                         "Stopped processing remaining fines for configuration: %s",
                         config["name"])
@@ -72,7 +81,8 @@ class BuildActions:
         :return: A dictionary containing the processed fine data.
         """
         logger.info("Retrieving processed fine data.")
-        return self.return_data
+        self.__working_data["process_data"] = self.return_data
+        return self.__working_data
 
     def __process_fine(self, fines, conf, trans_active):
         """

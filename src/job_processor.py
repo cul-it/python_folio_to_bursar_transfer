@@ -106,20 +106,19 @@ class JobProcessor:
                 trans_active = job["trans_active"] if 'trans_active' in job else False
                 logger.debug("Transaction active: %s",
                              trans_active)
-                process_data = BuildActions(
+                working_data = {
+                    "charge_data": charge_data,
+                    "refund_data": refund_data
+                }
+                working_data = BuildActions(
                     connector,
-                    charge_data["data"],
+                    working_data,
                     settings,
                     trans_active).get_process_data()
                 logger.debug("Process data %s",
-                             process_data)
+                             working_data)
 
                 # Build the export data
-                working_data = {
-                    "charge_data": charge_data,
-                    "refund_data": refund_data,
-                    "process_data": process_data
-                }
                 ExportData(working_data, settings)
                 logger.info("Job %s processed successfully.",
                             job.get('name', 'Unnamed Test Job'))
@@ -161,20 +160,22 @@ class JobProcessor:
             refund_data = BuildCredits(connector, settings).get_credits()
             logger.debug("Refund data: %s", refund_data)
 
-            # Process the Fine data
-            process_data = BuildActions(
-                connector,
-                charge_data["data"],
-                settings,
-                False).get_process_data()
-            logger.debug("Process data: %s", process_data)
 
-            # Build the export data
             working_data = {
                 "charge_data": charge_data,
                 "refund_data": refund_data,
-                "process_data": process_data
+                "process_data": []
             }
+
+            # Process the Fine data
+            working_data = BuildActions(
+                connector,
+                working_data,
+                settings,
+                False).get_process_data()
+            logger.debug("Process data: %s", working_data)
+
+            # Build the export data
             ExportData(working_data, settings)
             logger.info("Job %s processed successfully.",
                         job.get('name', 'Unnamed Test Job'))
