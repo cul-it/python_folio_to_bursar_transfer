@@ -30,6 +30,23 @@ class BuildCharges:
             the material data from the FOLIO system and includes it in the fee fine data.
     """
 
+    PATRON_MERGE_SETTINGS = {
+        "merge_type": "API",
+        "api_call": "{{FOLIO}}/users/{{ID}}",
+        "filter_field": "userId",
+        "new_field": "patron",
+        "api_action": "BATCH",
+        "api_root": False,
+    }
+    MATERIAL_MERGE_SETTINGS = {
+        "merge_type": "API",
+        "api_call": "{{FOLIO}}/material-types?limit=1000",
+        "filter_field": "materialTypeId",
+        "new_field": "material",
+        "api_action": "FLATTEN",
+        "api_root": "mtypes",
+    }
+
     def __init__(self, connector, settings):
         """
         Initialize the BuildCharges class.
@@ -49,7 +66,7 @@ class BuildCharges:
             "uniquePatronCount": 0,
             "rawRecordCount": 0,
         }
-        self.__data_processor = DataProcessor()
+        self.__data_processor = DataProcessor(connector)
         logger.info("BuildCharges initialized with settings: %s", settings)
 
     def get_charges(self):
@@ -64,14 +81,16 @@ class BuildCharges:
         logger.debug("Retrieved outstanding fines: %d records",
                      len(fines))
 
-        patron_id = list(set(f['userId'] for f in fines))
-        logger.debug("Unique patron IDs extracted: %d",
-                     len(patron_id))
+        # patron_id = list(set(f['userId'] for f in fines))
+        # logger.debug("Unique patron IDs extracted: %d",
+        #              len(patron_id))
 
-        fines = self.__get_patron_data(fines, patron_id)
+        # fines = self.__get_patron_data(fines, patron_id)
+        fines = self.__data_processor.merge_field_data(fines=fines, settings=self.PATRON_MERGE_SETTINGS)
         logger.debug("Patron data merged into fines.")
 
-        fines = self.__get_material_data(fines)
+        # fines = self.__get_material_data(fines)
+        fines = self.__data_processor.merge_field_data(fines=fines, settings=self.MATERIAL_MERGE_SETTINGS)
         logger.debug("Material data merged into fines.")
 
         self.__filter_data['rawRecordCount'] = len(fines)
@@ -141,61 +160,5 @@ class BuildCharges:
         logger.info("Reported record count: %d",
                     self.__filter_data['reportedRecordCount'])
         return data['accounts']
-
-    def __get_patron_data(self, fines, patron_id):
-        """
-        This function retrieves the patron data from the FOLIO system
-        and adds it to the fine data.
-        :param fines: The list of fines to be processed.
-        :param patron_id: The list of unique patron IDs.
-        :return: The list of fines with the patron data included.
-        """
-        logger.info("Retrieving patron data for %d patrons.", len(patron_id))
-        new_data = {}
-        for p in patron_id:
-            self.__filter_data['uniquePatronCount'] += 1
-            new_data[p] = self.__connector.get_request(f'/users/{p}')
-            logger.debug("Retrieved data for patron ID: %s", p)
-
-        for f in fines:
-            f['patron'] = new_data[f['userId']]
-        logger.info("Patron data merged into fines.")
-        return fines
-
-    def __get_material_data(self, fines):
-        """
-        This function retrieves the material data from the FOLIO system and
-        includes it in the fee fine data.
-        :param fines: The list of fines to be processed.
-        :return: The list of fines with the material data included.
-        """
-        logger.info("Retrieving material data.")
-        raw_material_list = self.__connector.get_request(
-            '/material-types?limit=1000')
-        new_data = {}
-        for m in raw_material_list['mtypes']:
-            new_data[m['id']] = m
-            logger.debug("Material type added: %s", m['id'])
-
-        for f in fines:
-            if 'materialTypeId' not in f:
-                f['material'] = {
-                    "id": "",
-                    "name": "",
-                    "source": "",
-                    "metadata": {
-                        "createdDate": "",
-                        "createdByUserId": "",
-                        "updatedDate": "",
-                        "updatedByUserId": ""
-                    }
-                }
-                logger.debug("Default material data added for fine: %s", f)
-            else:
-                f['material'] = new_data[f['materialTypeId']]
-                logger.debug(
-                    "Material data added for fine: %s",
-                    f['materialTypeId'])
-        logger.info("Material data merged into fines.")
-        return fines
+    
 # End of class BuildCharges

@@ -3,8 +3,11 @@ This module is used to process data from the data sets.
 It is used to filter, update, and merge data from the data sets.
 """
 import logging
+
+import requests
 from src.shared.env_loader import EnvLoader
 from src.shared.file_loader import FileLoader
+from src.shared.common_helpers import *
 
 logger = logging.getLogger(__name__)
 
@@ -31,10 +34,11 @@ class DataProcessor:
         __flatten_array(ary : list) -> list: Flattens an array of dictionaries.
     """
 
-    def __init__(self):
+    def __init__(self, connector):
         logger.info("Initializing DataProcessor.")
         self.__filter_data = {}
         self.__error_data = []
+        self.__connector = connector
         env = EnvLoader()
         conf = {
             "type": env.get(
@@ -205,7 +209,32 @@ class DataProcessor:
         :param settings : dict - The settings to be used to merge the data.
         :returns: list - The updated data set.
         """
+
         logger.info("Running merge_field_data with settings: %s", settings)
+        batch = {}
+        if "api_action" in settings and settings['api_action'].upper() == "BATCH":
+            logger.debug("Processing API batch with settings: %s", settings)
+            ids = []
+            for f in fines:
+                id_value = get_nested_value(f, settings['filter_field'])
+                logger.debug("Extracted ID value: %s", id_value)
+                ids.append(id_value)
+            for i in ids:
+                logger.debug("Fetching data for ID: %s", i)
+                data = self.__get_data(settings['api_call'], i)
+                if "api_root" in settings and settings['api_root'] is not False:
+                    batch[i] = data[settings['api_root']]
+                else:
+                    batch[i] = data
+        if "api_action" in settings and settings['api_action'].upper() == "FLATTEN":
+            logger.debug("Flattening API data with settings: %s", settings)
+            batch = self.__get_data(settings['api_call'], settings['filter_field'])
+            logger.debug("Raw batch data: %s", batch)
+            if "api_root" in settings and settings['api_root'] is not False:
+                batch = batch[settings['api_root']]
+            batch = self.__flatten_array_dict(batch)
+            logger.debug("Flattened batch data: %s", batch)
+
         if settings['merge_type'].upper() == "FIELD":
             old_keys_1 = settings['field_1'].split('.')
             old_keys_2 = settings['field_2'].split('.')
@@ -246,6 +275,21 @@ class DataProcessor:
                 # Apply the replacement
                 final_new_key = new_keys[-1]
                 new_dict[final_new_key] = merge_data[key_value]
+        elif settings['merge_type'].upper() == "API":
+            logger.debug(
+                "Merging fields using external API: %s",
+                settings)
+            for f in fines:
+                logger.debug("Processing record: %s", f)
+                if settings['api_action'].upper() == "BATCH" or settings['api_action'].upper() == "FLATTEN":
+                    working_id = get_nested_value(f, settings['filter_field'])
+                    print(f"ID: {working_id}")
+                    logger.debug("Extracted ID value: %s", working_id)
+                    data = batch[working_id]
+                else:
+                    data = self.__get_data(
+                        settings['api_call'], f[settings['filter_field']])
+                set_nested_value(f, data, settings['new_field'])
         logger.info("Merge complete.")
         return fines
 
@@ -330,7 +374,50 @@ class DataProcessor:
         logger.debug("Flattening array.")
         new_data = []
         for x in ary:
-            new_data.append(x['uuid'])
+            if "uuid" in x:
+                new_data.append(x['uuid'])
+            elif "id" in x:
+                new_data.append(x['id'])
         return new_data
+    
+    def __flatten_array_dict(self, ary):
+        """
+        This function is used to flatten an array of dictionaries.
+        :param ary : list - The array to be flattened.
+        :returns: dict - The flattened dictionary with IDs as keys.
+        """
+        logger.debug("Flattening array.")
+        new_data = {}
+        for x in ary:
+            new_key = ''
+            if "uuid" in x:
+                new_key = x['uuid']
+            elif "id" in x:
+                new_key = x['id']
+            if new_key:  # Ensure the key is not empty
+                logger.debug("Processing ID: %s", new_key)
+                new_data[new_key] = x
+        return new_data
+
+    def __get_data(self, raw_url, filter_id):
+        """
+        This function is used to get the data from the API.
+        :param url : str - The URL to be processed.
+        :returns: dict - The processed data set.
+        """
+        if "{{ID}}" in raw_url:
+            raw_url = raw_url.replace("{{ID}}", filter_id)
+
+        data = []
+        if "{{FOLIO}}" in raw_url:
+            raw_url = raw_url.replace("{{FOLIO}}", '')
+            data = self.__connector.get_request(
+                url_part=raw_url
+            )
+        else:
+            r = requests.get(raw_url, timeout=30)
+            r.raise_for_status()
+            data = r.json()
+        return data
 
 # End class DataProcessor
