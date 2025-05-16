@@ -13,39 +13,38 @@ logger = logging.getLogger(__name__)
 
 class MicrosoftConnector:
 
-    def __init__(self, env_key):
+    def __init__(self, connection_name):
         """
         Initializes the MSEmail class with client ID, client secret, and tenant ID.
         """
-        self.__env_key = env_key
-        connection_id = EnvLoader().get(name=f"{self.__env_key}_CONNECTION")
-        logger.info("Initializing MSEmail with env_key: %s", self.__env_key)
+        self.__connection_name = connection_name
+        logger.info("Initializing MSConnector with connection_name: %s", self.__connection_name)
         credentials = (
-            EnvLoader().get(name=f"{connection_id}_CLIENT_ID"),
-            EnvLoader().get(name=f"{connection_id}_CERTIFICATE_VALUE")
+            EnvLoader().get(name=f"{self.__connection_name}_CLIENT_ID"),
+            EnvLoader().get(name=f"{self.__connection_name}_CERTIFICATE_VALUE")
         )
 
-        match EnvLoader().get(name=f"{connection_id}_AUTH_LOCATION").upper():
+        match EnvLoader().get(name=f"{self.__connection_name}_AUTH_LOCATION").upper():
             case 'LOCAL':
                 logger.info("Loading local credentials...")
                 token_backend = FileSystemTokenBackend(
                     token_path=EnvLoader().get(
-                        name=f"{connection_id}_AUTH_PATH"),
-                    token_filename=f"{connection_id}_TOKEN.json")
+                        name=f"{self.__connection_name}_AUTH_PATH"),
+                    token_filename=f"{self.__connection_name}_TOKEN.json")
             case 'S3':
-                if EnvLoader().get(name=f"{connection_id}_SECURE"):
+                if EnvLoader().get(name=f"{self.__connection_name}_SECURE"):
                     logger.info("Loading AWS credentials from S3 bucket.")
                     token_backend = CustomAwsS3Backend(
                         env_key=EnvLoader().get(
-                            name=f"{connection_id}_AUTH_PATH"),
-                        filename=f"{connection_id}_TOKEN.json")
+                            name=f"{self.__connection_name}_AUTH_PATH"),
+                        filename=f"{self.__connection_name}_TOKEN.json")
                 else:
                     logger.info(
                         "Loading AWS credentials from Lambda function.")
                     token_backend = AWSS3Backend(
                         bucket_name=EnvLoader().get(
-                            name=f"{connection_id}_AUTH_PATH"),
-                        filename=f"{connection_id}_TOKEN.json")
+                            name=f"{self.__connection_name}_AUTH_PATH"),
+                        filename=f"{self.__connection_name}_TOKEN.json")
             case _:
                 logger.error(
                     "Invalid AUTH_LOCATION. Must be 'LOCAL' or 'AWS'.")
@@ -74,10 +73,10 @@ class MicrosoftConnector:
         """
 
         sp_site = self.__acct.sharepoint().get_site(
-            EnvLoader().get(name=f"{self.__env_key}_SITE")
+            EnvLoader().get(name=f"{self.__connection_name}_SITE")
         )
         return sp_site.get_list_by_name(
-            EnvLoader().get(name=f"{self.__env_key}_LIST")
+            EnvLoader().get(name=f"{self.__connection_name}_LIST")
         )
 
     def get_new_storage(self):
