@@ -17,10 +17,10 @@ class AwsBucketExporter:
     def __init__(self, conf, template_processor):
         """
         Initialize the AwsBucketExporter with the bucket name and AWS credentials.
-        :param env_key: The environment key used in the .env file to retrieve S3 
+        :param connection_name: The environment key used in the .env file to retrieve S3 
             bucket and credentials.
         """
-        self.__s3_uploader = S3Uploader(env_key=conf['env_key'])
+        self.__s3_uploader = S3Uploader(connection_name=conf['connection_name'])
         self.__conf = conf
         self.__template_processor = template_processor
 

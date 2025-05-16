@@ -26,26 +26,26 @@ class EmailSmtpExporter:
     def __init__(self, conf, template_processor):
         """
         Initialize the SMTPEmailSender class.
-        :param env_key: The environment key for loading SMTP configuration
+        :param connection_name: The environment key for loading SMTP configuration
             from environment variables.
         :return: None
         """
-        env_key = conf['env_key']
-        logger.info("Initializing SftpUploader with env_key: %s", env_key)
+        connection_name = conf['connection_name']
+        logger.info("Initializing SftpUploader with connection_name: %s", connection_name)
         self.__conf = conf
         self.__template_processor = template_processor
 
-        logger.info("Initializing SMTPEmailSender with env_key: %s", env_key)
+        logger.info("Initializing SMTPEmailSender with connection_name: %s", connection_name)
         self.__connection = {
-            "smtp_server": EnvLoader().get(name=f"{env_key}_HOST"),
-            "port": EnvLoader().get(name=f"{env_key}_PORT"),
-            "username": EnvLoader().get(name=f"{env_key}_USERNAME"),
-            "password": EnvLoader().get(name=f"{env_key}_PASSWORD"),
-            "use_tls": EnvLoader().get(name=f"{env_key}_TLS")
+            "smtp_server": EnvLoader().get(name=f"{connection_name}_HOST"),
+            "port": EnvLoader().get(name=f"{connection_name}_PORT"),
+            "username": EnvLoader().get(name=f"{connection_name}_USERNAME"),
+            "password": EnvLoader().get(name=f"{connection_name}_PASSWORD"),
+            "use_tls": EnvLoader().get(name=f"{connection_name}_TLS")
         }
         self.__message = MIMEMultipart()
         self.__message["From"] = EnvLoader().get(
-            name=f"{env_key}_DEFAULT_FROM")
+            name=f"{connection_name}_DEFAULT_FROM")
         logger.info("SMTPEmailSender initialized with server: %s, port: %s",
                     self.__connection["smtp_server"], self.__connection["port"])
 

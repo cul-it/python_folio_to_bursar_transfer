@@ -24,17 +24,17 @@ class SlackExporter:
         Initialize the SlackMessenger class.
         :param conf: The configuration settings for the job.
         """
-        env_key = conf['env_key']
-        logger.info("Initializing SftpUploader with env_key: %s", env_key)
+        connection_name = conf['connection_name']
+        logger.info("Initializing SftpUploader with connection_name: %s", connection_name)
         self.__conf = conf
         self.__template_processor = template_processor
 
-        logger.info("Initializing SlackMessenger with env_key: %s", env_key)
+        logger.info("Initializing SlackMessenger with connection_name: %s", connection_name)
         env = EnvLoader()
 
         # Retrieve environment variables
-        self.__channel = env.get(name=f"{env_key}_CHANNEL")
-        self.__client = WebClient(token=env.get(name=f"{env_key}_TOKEN"))
+        self.__channel = env.get(name=f"{connection_name}_CHANNEL")
+        self.__client = WebClient(token=env.get(name=f"{connection_name}_TOKEN"))
         logger.info(
             "SlackMessenger initialized for channel: %s",
             self.__channel)

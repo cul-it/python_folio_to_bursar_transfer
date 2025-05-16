@@ -18,12 +18,12 @@ class EmailMicrosoftExporter:
         """
         Initializes the MSEmail class with client ID, client secret, and tenant ID.
         """
-        env_key = conf['env_key']
+        connection_name = conf['connection_name']
         self.__conf = conf
         self.__template_processor = template_processor
 
-        logger.info("Initializing MSEmail with env_key: %s", env_key)
-        ms_connector = MicrosoftConnector(env_key)
+        logger.info("Initializing MSEmail with connection_name: %s", connection_name)
+        ms_connector = MicrosoftConnector(connection_name)
         self.__message = ms_connector.get_new_message()
         logger.info("MSEmail initialized.")
 

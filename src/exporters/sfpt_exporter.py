@@ -28,38 +28,38 @@ class SfptExporter:
         """
         Transfer a file to an SFTP server using either a certificate (private key) or
         username and password.
-        :param env_key: The environment key used in the .env file to retrieve S3 bucket and FTP.
+        :param connection_name: The environment key used in the .env file to retrieve S3 bucket and FTP.
         :return: None
         """
-        env_key = conf['env_key']
-        logger.info("Initializing SftpUploader with env_key: %s", env_key)
+        connection_name = conf['connection_name']
+        logger.info("Initializing SftpUploader with connection_name: %s", connection_name)
         self.__conf = conf
         self.__template_processor = template_processor
 
-        logger.info("Initializing SftpUploader with env_key: %s", env_key)
-        self.__ftp_remote_path = EnvLoader().get(name=f"{env_key}_REMOTE_PATH")
+        logger.info("Initializing SftpUploader with connection_name: %s", connection_name)
+        self.__ftp_remote_path = EnvLoader().get(name=f"{connection_name}_REMOTE_PATH")
 
         # Create an SSH client
         self.__ssh_client = paramiko.SSHClient()
 
         # See if the user wants to use a private key or password
         if EnvLoader().get(
-                name=f"{env_key}_PASSWORD").upper() == 'CERTIFICATE':
+                name=f"{connection_name}_PASSWORD").upper() == 'CERTIFICATE':
             logger.info("Using certificate for authentication.")
             if EnvLoader().get(
-                    name=f"{env_key}_CERTIFICATE_LOCATION").upper() == 'LOCAL':
+                    name=f"{connection_name}_CERTIFICATE_LOCATION").upper() == 'LOCAL':
                 logger.info("Loading certificate from local file system.")
                 with open(
-                    EnvLoader().get(name=f"{env_key}_CERTIFICATE_PATH"),
+                    EnvLoader().get(name=f"{connection_name}_CERTIFICATE_PATH"),
                     'r', encoding='utf-8'
                 ) as file:
                     certificate = file.read()
-            elif 'AWS' in EnvLoader().get(name=f"{env_key}_CERTIFICATE_LOCATION").upper():
+            elif 'AWS' in EnvLoader().get(name=f"{connection_name}_CERTIFICATE_LOCATION").upper():
                 logger.info("Loading certificate from AWS S3.")
-                s3_uploader = S3Uploader(f"{env_key}_CERTIFICATE_LOCATION")
+                s3_uploader = S3Uploader(f"{connection_name}_CERTIFICATE_LOCATION")
                 certificate = s3_uploader.download_file_as_variable(
-                    f"{env_key}_CERTIFICATE_PATH")
-            if EnvLoader().get(name=f"{env_key}_KEY_TYPE").upper() == 'RSA':
+                    f"{connection_name}_CERTIFICATE_PATH")
+            if EnvLoader().get(name=f"{connection_name}_KEY_TYPE").upper() == 'RSA':
                 certificate = paramiko.RSAKey.from_private_key(
                     io.StringIO(certificate))
             else:
@@ -72,7 +72,7 @@ class SfptExporter:
         # If not, we will use the AutoAddPolicy
         # If the known_hosts file is provided, we will use the RejectPolicy
         # to reject any unknown hosts
-        if not EnvLoader().get(name=f"{env_key}_KNOW_HOSTS_LOCATION"):
+        if not EnvLoader().get(name=f"{connection_name}_KNOW_HOSTS_LOCATION"):
             logger.info("No known_hosts file provided. Using AutoAddPolicy.")
             self.__ssh_client.set_missing_host_key_policy(
                 paramiko.AutoAddPolicy())
@@ -80,19 +80,19 @@ class SfptExporter:
             logger.info("Loading known_hosts file.")
             known_hosts = None
             if EnvLoader().get(
-                    name=f"{env_key}_KNOW_HOSTS_LOCATION").upper() == 'LOCAL':
+                    name=f"{connection_name}_KNOW_HOSTS_LOCATION").upper() == 'LOCAL':
                 logger.info("Loading known_hosts from local file system.")
                 with open(EnvLoader().get(
-                    name=f"{env_key}_KNOW_HOSTS_PATH"),
+                    name=f"{connection_name}_KNOW_HOSTS_PATH"),
                     'r', encoding='utf-8'
                 ) as file:
                     known_hosts = file.read()
-            elif 'AWS' in EnvLoader().get(name=f"{env_key}_KNOW_HOSTS_LOCATION").upper():
+            elif 'AWS' in EnvLoader().get(name=f"{connection_name}_KNOW_HOSTS_LOCATION").upper():
                 logger.info("Loading known_hosts from AWS S3.")
                 s3_uploader = S3Uploader(EnvLoader().get(
-                    name=f"{env_key}_KNOW_HOSTS_LOCATION").upper())
+                    name=f"{connection_name}_KNOW_HOSTS_LOCATION").upper())
                 known_hosts = s3_uploader.download_file_as_variable(
-                    EnvLoader().get(name=f"{env_key}_KNOW_HOSTS_PATH")
+                    EnvLoader().get(name=f"{connection_name}_KNOW_HOSTS_PATH")
                 )
 
             if not known_hosts:
@@ -117,21 +117,21 @@ class SfptExporter:
 
         # Create a connection to the SFTP server
         if EnvLoader().get(
-                name=f"{env_key}_PASSWORD").upper() == 'CERTIFICATE':
+                name=f"{connection_name}_PASSWORD").upper() == 'CERTIFICATE':
             logger.info("Connecting to SFTP server using certificate.")
             self.__ssh_client.connect(
-                hostname=EnvLoader().get(name=f"{env_key}_HOST"),
-                port=EnvLoader().get(name=f"{env_key}_PORT"),
-                username=EnvLoader().get(name=f"{env_key}_USER"),
+                hostname=EnvLoader().get(name=f"{connection_name}_HOST"),
+                port=EnvLoader().get(name=f"{connection_name}_PORT"),
+                username=EnvLoader().get(name=f"{connection_name}_USER"),
                 pkey=certificate
             )
         else:
             logger.info("Connecting to SFTP server using password.")
             self.__ssh_client.connect(
-                hostname=EnvLoader().get(name=f"{env_key}_HOST"),
-                port=EnvLoader().get(name=f"{env_key}_PORT"),
-                username=EnvLoader().get(name=f"{env_key}_USER"),
-                password=EnvLoader().get(name=f"{env_key}_PASSWORD")
+                hostname=EnvLoader().get(name=f"{connection_name}_HOST"),
+                port=EnvLoader().get(name=f"{connection_name}_PORT"),
+                username=EnvLoader().get(name=f"{connection_name}_USER"),
+                password=EnvLoader().get(name=f"{connection_name}_PASSWORD")
             )
         self.__sftp = self.__ssh_client.open_sftp()
         logger.info("SftpUploader initialized successfully.")
