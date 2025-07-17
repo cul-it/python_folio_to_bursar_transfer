@@ -19,11 +19,11 @@ class AirTableConnector:
     - delete_rows: Delete rows from the AirTable based on the filter string.
     """
 
-    def __init__(self, env_key: str):
-        logger.info("Initializing AirTableConnector with env_key: %s", env_key)
-        api = Api(EnvLoader().get(name=f"{env_key}_API_KEY"))
-        app_id = EnvLoader().get(name=f"{env_key}_APP_ID")
-        table_id = EnvLoader().get(name=f"{env_key}_TABLE_ID")
+    def __init__(self, conf):
+        logger.info("Initializing AirTableConnector with connection_name: %s", conf['connection_name'])
+        api = Api(EnvLoader().get(name=f"{conf['connection_name']}_API_KEY"))
+        app_id = EnvLoader().get(name=f"{conf['connection_name']}_APP_ID")
+        table_id = EnvLoader().get(name=f"{conf['connection_name']}_TABLE_ID")
         self.__table = api.table(app_id, table_id)
         logger.info("AirTableConnector initialized successfully.")
 

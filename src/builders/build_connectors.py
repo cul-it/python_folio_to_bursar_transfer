@@ -34,7 +34,7 @@ class SendToConnecter:
     def __init__(self, working_data, settings):
         """
         Initialize the SendToConnecter class.
-        :param env_key: The environment key for the connector.
+        :param connection_name: The environment key for the connector.
         """
         env = EnvLoader()
         template_conf = {
@@ -141,7 +141,7 @@ class SendToConnecter:
                     ) from e
 
         # Initialize the connector instance
-        connector_instance = connector_class(env_key=conf['env_key'])
+        connector_instance = connector_class(conf=conf)
         logger.info("Uploading to %s.", conf['connector_type'])
 
         # Define actions

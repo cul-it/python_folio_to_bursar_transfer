@@ -11,11 +11,11 @@ class SharePointConnection:
     A class to handle sending emails using Microsoft Graph API.
     """
 
-    def __init__(self, env_key):
+    def __init__(self, conf):
         """
         Initializes the MSEmail class with client ID, client secret, and tenant ID.
         """
-        ms_connector = MicrosoftConnector(env_key)
+        ms_connector = MicrosoftConnector(conf['connection_name'])
         self.__sp_list = ms_connector.get_sharepoint_list()
 
     def write_rows(self, data):

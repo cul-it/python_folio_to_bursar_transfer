@@ -119,7 +119,7 @@ export:
     template_data: "CHARGE_DATA"
     export_type: "S3"
     export_to: ""
-    env_key: "AWS_1"
+    connection_name: "AWS_1"
     attachment: false
   - file_name: "Report summary {date}" # Sample of an email with an attachment
     file_append_date: true
@@ -128,7 +128,7 @@ export:
     template_data: "CHARGE_DATA"
     export_type: "EMAIL"
     export_to: "james@institution.com"
-    env_key: "AWS_1"
+    connection_name: "AWS_1"
     attachment: 
     - file_name: "charges_{date}.csv"
       file_append_date: true
@@ -138,7 +138,7 @@ export:
 
 connectors:
   - name: "Airtable"
-    env_key: "AIR_TABLE_1"
+    connection_name: "AIR_TABLE_1"
     connector_type: "AIRTABLE"
     mapping_type: "INLINE"
     connector_action: "CREATE"
@@ -160,7 +160,7 @@ connectors:
         field_type: "STATIC"
         field_format: "This was added by the transfer automation system"
   - name: "Airtable"
-    env_key: "AIR_TABLE_1"
+    connection_name: "AIR_TABLE_1"
     connector_type: "AIRTABLE"
     mapping_type: "INLINE"
     connector_action: "UPDATE"
@@ -174,14 +174,14 @@ connectors:
         field_source: "patron.firstName"
         field_type: "DYNAMIC"
   - name: "Airtable"
-    env_key: "AIR_TABLE_1"
+    connection_name: "AIR_TABLE_1"
     connector_type: "AIRTABLE"
     connector_action: "DELETE"
     field_data: "CHARGE_DATA"
     filter_filed: "External ID"
     filter_value: "patron.externalSystemId"
   - name: "Bursar API"
-    env_key: "AWS_1"
+    connection_name: "AWS_1"
     connector_type: "SHAREPOINT"
     mapping_type: "TEMPLATE"
     field_data: "CHARGE_DATA"
