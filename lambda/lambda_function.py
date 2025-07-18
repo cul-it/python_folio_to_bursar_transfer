@@ -2,7 +2,12 @@
  This is a simple AWS Lambda function template.
  It will load the main job function and execute it.
  """
+import logging
 from src.job_processor import JobProcessor
+
+logger = logging.getLogger()
+logger.setLevel("NOTSET")  # Set to DEBUG for more detailed logs
+
 
 def lambda_handler(event, context):
     # This function is executed when the Lambda function is invoked

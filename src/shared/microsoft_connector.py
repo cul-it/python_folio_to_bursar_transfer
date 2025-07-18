@@ -18,33 +18,34 @@ class MicrosoftConnector:
         Initializes the MSEmail class with client ID, client secret, and tenant ID.
         """
         self.__connection_name = connection_name
+        self.__ms_connection = EnvLoader().get(name=f"{connection_name}_CONNECTION")
         logger.info("Initializing MSConnector with connection_name: %s", self.__connection_name)
         credentials = (
-            EnvLoader().get(name=f"{self.__connection_name}_CLIENT_ID"),
-            EnvLoader().get(name=f"{self.__connection_name}_CERTIFICATE_VALUE")
+            EnvLoader().get(name=f"{self.__ms_connection}_CLIENT_ID"),
+            EnvLoader().get(name=f"{self.__ms_connection}_CERTIFICATE_VALUE")
         )
 
-        match EnvLoader().get(name=f"{self.__connection_name}_AUTH_LOCATION").upper():
+        match EnvLoader().get(name=f"{self.__ms_connection}_AUTH_LOCATION").upper():
             case 'LOCAL':
                 logger.info("Loading local credentials...")
                 token_backend = FileSystemTokenBackend(
                     token_path=EnvLoader().get(
-                        name=f"{self.__connection_name}_AUTH_PATH"),
-                    token_filename=f"{self.__connection_name}_TOKEN.json")
+                        name=f"{self.__ms_connection}_AUTH_PATH"),
+                    token_filename=f"{self.__ms_connection}_TOKEN.json")
             case 'S3':
-                if EnvLoader().get(name=f"{self.__connection_name}_SECURE"):
+                if EnvLoader().get(name=f"{self.__ms_connection}_SECURE"):
                     logger.info("Loading AWS credentials from S3 bucket.")
                     token_backend = CustomAwsS3Backend(
                         env_key=EnvLoader().get(
-                            name=f"{self.__connection_name}_AUTH_PATH"),
-                        filename=f"{self.__connection_name}_TOKEN.json")
+                            name=f"{self.__ms_connection}_AUTH_PATH"),
+                        filename=f"{self.__ms_connection}_TOKEN.json")
                 else:
                     logger.info(
                         "Loading AWS credentials from Lambda function.")
                     token_backend = AWSS3Backend(
                         bucket_name=EnvLoader().get(
-                            name=f"{self.__connection_name}_AUTH_PATH"),
-                        filename=f"{self.__connection_name}_TOKEN.json")
+                            name=f"{self.__ms_connection}_AUTH_PATH"),
+                        filename=f"{self.__ms_connection}_TOKEN.json")
             case _:
                 logger.error(
                     "Invalid AUTH_LOCATION. Must be 'LOCAL' or 'AWS'.")
@@ -78,11 +79,45 @@ class MicrosoftConnector:
         return sp_site.get_list_by_name(
             EnvLoader().get(name=f"{self.__connection_name}_LIST")
         )
+    
+    def get_sharepoint_site(self):
+        """
+        Returns a SharePoint folder object.
+        """
+        sp_site = self.__acct.sharepoint().get_site(
+            EnvLoader().get(name=f"{self.__connection_name}_SITE")
+        )
+        return sp_site
+        # folder = EnvLoader().get(name=f"{self.__connection_name}_FOLDER")
+        # sp_site = sp_site.get_default_document_library()
+        # return sp_site.get_item_by_path(folder)
 
     def get_new_storage(self):
         """
         Returns the storage object for OneDrive.
         """
         return self.__acct.storage()
+    
+    def walk_the_tree(self, folder, ms_site):
+        """
+        Walks through the folder tree and returns a list of items.
+        """
+        cur_folder = EnvLoader().get(name=f"{self.__connection_name}_FOLDER")
+        folders = folder.split('/')
+        for item in folders:
+            logger.info("Current item: %s", item)
+            if not item:
+                continue
+            ms_site_copy = ms_site.get_default_document_library()
+            ms_site_copy = ms_site_copy.get_item_by_path(f"{cur_folder}/{item}")
+            if not ms_site_copy:
+                logger.info("Creating new folder: %s", item)
+                ms_site_copy = ms_site.get_default_document_library()
+                ms_site_copy = ms_site_copy.get_item_by_path(cur_folder)
+                ms_site_copy = ms_site_copy.create_child_folder(item)
+            cur_folder = f"{cur_folder}/{item}"
+        logger.info("Final folder path: %s", cur_folder)
+        ms_site = ms_site.get_default_document_library()
+        return ms_site.get_item_by_path(cur_folder)
 
 # End of class MicrosoftConnector

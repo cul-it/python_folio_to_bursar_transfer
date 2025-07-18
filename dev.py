@@ -25,10 +25,10 @@ if "-h" in sys.argv or "--help" in sys.argv:
     sys.exit(0)
 parser = argparse.ArgumentParser(
     description="Run the job processor in a development environment.")
-parser.add_argument("-l", "--log-level", type=str, 
+parser.add_argument("-l", "--log-level", type=str,
                     choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
                     default="INFO", help="Set the logging level (default: DEBUG).")
-parser.add_argument("-t", "--log-type", type=str, 
+parser.add_argument("-t", "--log-type", type=str,
                     choices=["console", "file"], default="console",
                     help="Set the logging output type (default: console).")
 args = parser.parse_args()

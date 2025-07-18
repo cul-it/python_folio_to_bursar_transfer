@@ -190,3 +190,4 @@ utilities/models/
 utilities/faker/
 lambda_package.zip
 .env_docker
+web/
