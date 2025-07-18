@@ -112,25 +112,21 @@ processors:
     process_active: true
 
 export:
-  - file_name: "charges_{date}.csv"
-    file_append_date: true
-    date_format: "%Y%m%d"
+  - file_name: "charges_{{format_date 'NOW' '%Y%m%d'}}.csv"
     template_name: "charges"
     template_data: "CHARGE_DATA"
     export_type: "S3"
     export_to: ""
     connection_name: "AWS_1"
     attachment: false
-  - file_name: "Report summary {date}" # Sample of an email with an attachment
-    file_append_date: true
-    date_format: "%Y%m%d"
+  - file_name: "Report summary {{format_date 'NOW' '%Y%m%d'}}" # Sample of an email with an attachment
     template_name: "email_body"
     template_data: "CHARGE_DATA"
     export_type: "EMAIL"
     export_to: "james@institution.com"
     connection_name: "AWS_1"
     attachment: 
-    - file_name: "charges_{date}.csv"
+    - file_name: "charges_{{format_date 'NOW' '%Y%m%d'}}.csv"
       file_append_date: true
       date_format: "%Y%m%d"
       template_name: "charges"
