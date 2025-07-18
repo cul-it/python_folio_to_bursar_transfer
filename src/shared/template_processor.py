@@ -22,7 +22,7 @@ class TemplateProcessor:
         - __init__: Initializes the TemplateProcessor class.
     """
 
-    def __init__(self, working_data, file_loader):
+    def __init__(self, working_data=None, file_loader=None):
         """
         Initialize the TemplateProcessor class.
         :param working_data: The data to be used for template processing.
@@ -32,6 +32,23 @@ class TemplateProcessor:
         self.__working_data = working_data
         self.__file_loader = file_loader
         logger.info("TemplateProcessor initialized successfully.")
+
+    def process_string_no_template(self, template, data=[]):
+        """
+        Process a string without using a template.
+        :param template: The string to process.
+        :return: The processed string.
+        """
+        logger.info("Processing string without template.")
+        compiler = Compiler()
+        helpers = {
+            'left_pad': left_pad,
+            'right_pad': right_pad,
+            'format_date': format_date,
+            'format_money': format_money
+        }
+        compiled_template = compiler.compile(template)
+        return compiled_template(data, helpers=helpers)
 
     def process_template(self, conf):
         """

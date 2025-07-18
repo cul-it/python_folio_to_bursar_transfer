@@ -4,8 +4,8 @@ This module provides functionality to upload files to OneDrive using the O365 li
 import io
 import logging
 from io import BytesIO
-from src.shared.common_helpers import generate_file_name
 from src.shared.microsoft_connector import MicrosoftConnector
+from src.shared.template_processor import TemplateProcessor
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +44,11 @@ class OneDriveExporter:
         logger.info("Processing export configuration: %s", self.__conf)
         processed_data = self.__template_processor.process_template(
             self.__conf)
-        file_name = generate_file_name(self.__conf)
+        
+        processor = TemplateProcessor()
+        file_name = processor.process_string_no_template(
+            self.__conf.get('file_name', None)
+        )
         logger.debug("Processed file name: %s", file_name)
         folder_name = self.__conf.get('export_to', None)
 

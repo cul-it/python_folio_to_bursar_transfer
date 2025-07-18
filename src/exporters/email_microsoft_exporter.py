@@ -3,8 +3,8 @@
 import re
 import logging
 from io import BytesIO
-from src.shared.common_helpers import generate_file_name
 from src.shared.microsoft_connector import MicrosoftConnector
+from src.shared.template_processor import TemplateProcessor
 
 logger = logging.getLogger(__name__)
 
@@ -83,7 +83,11 @@ class EmailMicrosoftExporter:
         logger.info("Processing export configuration: %s", self.__conf)
         processed_data = self.__template_processor.process_template(
             self.__conf)
-        file_name = generate_file_name(self.__conf)
+        
+        processor = TemplateProcessor()
+        file_name = processor.process_string_no_template(
+            self.__conf.get('file_name', None)
+            )
         logger.debug("Processed file name: %s", file_name)
 
         self.build_message(
@@ -98,7 +102,9 @@ class EmailMicrosoftExporter:
                 logger.debug("Processing email attachment: %s", attach)
                 attachment_data = self.__template_processor.process_template(
                     attach)
-                attachment_name = generate_file_name(attach)
+                attachment_name = processor.process_string_no_template(
+                                    attach.get('file_name', None)
+                                    )
                 self.add_attachment(attachment_data, attachment_name)
 
         self.send_message()

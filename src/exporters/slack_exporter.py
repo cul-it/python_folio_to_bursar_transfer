@@ -9,7 +9,7 @@ and channel information.
 import logging
 from slack_sdk import WebClient
 from src.shared.env_loader import EnvLoader
-from src.shared.common_helpers import generate_file_name
+from src.shared.template_processor import TemplateProcessor
 
 logger = logging.getLogger(__name__)
 
@@ -113,7 +113,11 @@ class SlackExporter:
         logger.info("Processing export configuration: %s", self.__conf)
         processed_data = self.__template_processor.process_template(
             self.__conf)
-        file_name = generate_file_name(self.__conf)
+        
+        processor = TemplateProcessor()
+        file_name = processor.process_string_no_template(
+            self.__conf.get('file_name', None)
+            )
         logger.debug("Processed file name: %s", file_name)
 
         logger.info("Sending via Slack.")
@@ -124,7 +128,9 @@ class SlackExporter:
                 logger.debug("Processing Slack attachment: %s", attach)
                 attachment_data = self.__template_processor.process_template(
                     attach)
-                attachment_name = generate_file_name(attach)
+                attachment_name = processor.process_string_no_template(
+                    attach.get('file_name', None)
+                )
                 self.upload_file(
                     file_stream=attachment_data,
                     title=attachment_name,

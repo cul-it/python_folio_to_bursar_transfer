@@ -11,9 +11,9 @@ import paramiko.hostkeys
 import paramiko
 # pylint: disable-next=unused-import
 from paramiko import RSAKey, Ed25519Key
+from src.shared.template_processor import TemplateProcessor
 from src.uploaders.aws_bucket import S3Uploader
 from src.shared.env_loader import EnvLoader
-from src.shared.common_helpers import generate_file_name
 
 logger = logging.getLogger(__name__)
 
@@ -144,7 +144,11 @@ class SfptExporter:
         logger.info("Processing export configuration: %s", self.__conf)
         processed_data = self.__template_processor.process_template(
             self.__conf)
-        file_name = generate_file_name(self.__conf)
+        
+        processor = TemplateProcessor()
+        file_name = processor.process_string_no_template(
+            self.__conf.get('file_name', None)
+            )
         logger.debug("Processed file name: %s", file_name)
 
         logger.info("Uploading to Secure FTP site.")

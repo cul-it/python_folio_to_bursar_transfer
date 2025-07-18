@@ -3,11 +3,11 @@ common_helpers.py
 This module contains utility functions
 methods:
     pascal_to_camel_case: Converts a PascalCase string to camelCase.
-    generate_file_name: Processes the file name based on the configuration passed.
 """
 import re
 import logging
 from datetime import date
+from src.shared.template_processor import TemplateProcessor
 
 logger = logging.getLogger(__name__)
 
@@ -24,21 +24,19 @@ def pascal_to_camel_case(pascal_string):
     snake_case = re.sub(r'(?<!^)(?=[A-Z])', '_', pascal_string).lower()
     return snake_case
 
-
-def generate_file_name(conf):
+def generate_name_from_template(template, data=None):
     """
-    This function processes the file name based on the configuration.
-    It replaces the placeholders in the file name with actual values.
-    :param conf: The configuration dictionary for the export.
-    :return: The processed file name.
+    This function processes a template string with data.
+    It replaces placeholders in the template with actual values from the data.
+    :param template: The template string to process.
+    :param data: A list of data to replace in the template.
+    :return: The processed string with placeholders replaced by actual values.
     """
-    logger.info("Generating file name with configuration: %s", conf)
-    file_name = conf['file_name']
-    if conf['file_append_date']:
-        date_string = f'{date.today().strftime(conf["date_format"])}'
-        file_name = file_name.replace('{date}', date_string)
-    logger.debug("Generated file name: %s", file_name)
-    return file_name
+    if data is None:
+        data = []
+    logger.info("Processing template: %s with data: %s", template, data)
+    processor = TemplateProcessor()
+    return processor.process_string_no_template(template, data)
 
 def get_nested_value(data, *keys):
     """

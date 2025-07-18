@@ -6,7 +6,8 @@ This module provides functionality to export data to the local file system.
 # pylint: disable=R0801,too-few-public-methods
 import os
 import logging
-from src.shared.common_helpers import generate_file_name
+
+from src.shared.template_processor import TemplateProcessor
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +35,11 @@ class LocalExporter:
         logger.info("Processing export configuration: %s", self.__conf)
         processed_data = self.__template_processor.process_template(
             self.__conf)
-        file_name = generate_file_name(self.__conf)
+        
+        processor = TemplateProcessor()
+        file_name = processor.process_string_no_template(
+            self.__conf.get('file_name', None)
+            )
         logger.debug("Processed file name: %s", file_name)
 
         logger.info("Saving to local file system.")
