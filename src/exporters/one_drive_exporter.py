@@ -30,6 +30,13 @@ class OneDriveExporter:
         logger.info("Initializing OneDriveUploader with connection_name: %s", connection_name)
         ms_connector = MicrosoftConnector(connection_name)
         self.__storage = ms_connector.get_new_storage()
+        self.__processor = TemplateProcessor()
+
+        folder_name = self.__processor.process_string_no_template(
+            self.__conf.get('export_to', None)
+            )
+        logger.info("Processing export_to folder name: %s", folder_name)
+        self.__storage = ms_connector.walk_the_tree(folder_name, self.__storage, 'onedrive')
         logger.info("OneDriveUploader initialized successfully.")
 
     def ship_it(self):
@@ -50,16 +57,13 @@ class OneDriveExporter:
             self.__conf.get('file_name', None)
         )
         logger.debug("Processed file name: %s", file_name)
-        folder_name = self.__conf.get('export_to', None)
 
 
         logger.info("Uploading file '%s' to OneDrive.", file_name)
-        drive = self.__storage.get_default_drive()
-        folder = drive.get_root_folder() if folder_name is None else drive.get_item_by_path(folder_name)
 
         # Ensure processed_data is a string and upload as a BytesIO stream
         data_stream = io.StringIO(processed_data)
-        uploaded_file = folder.upload_file(item='na', stream=data_stream, stream_size=len(processed_data), item_name=file_name)
+        uploaded_file = self.__storage.upload_file(item='na', stream=data_stream, stream_size=len(processed_data), item_name=file_name)
         logger.info("File '%s' uploaded successfully to OneDrive.", file_name)
         return uploaded_file
     

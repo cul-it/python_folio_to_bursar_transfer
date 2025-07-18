@@ -35,7 +35,7 @@ class SharePointDriveExporter:
             self.__conf.get('export_to', None)
             )
         logger.info("Processing export_to folder name: %s", folder_name)
-        self.__storage = ms_connector.walk_the_tree(folder_name, self.__storage)
+        self.__storage = ms_connector.walk_the_tree(folder_name, self.__storage, 'sharepoint')
         logger.info("SharePointDriveExporter initialized successfully.")
 
     def ship_it(self):

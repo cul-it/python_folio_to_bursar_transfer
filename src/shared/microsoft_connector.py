@@ -98,7 +98,7 @@ class MicrosoftConnector:
         """
         return self.__acct.storage()
     
-    def walk_the_tree(self, folder, ms_site):
+    def walk_the_tree(self, folder, ms_site, type):
         """
         Walks through the folder tree and returns a list of items.
         """
@@ -108,11 +108,21 @@ class MicrosoftConnector:
             logger.info("Current item: %s", item)
             if not item:
                 continue
-            ms_site_copy = ms_site.get_default_document_library()
+            if type == 'onedrive':
+                logger.info("Walking through OneDrive: %s", item)
+                ms_site_copy = ms_site.get_default_drive()
+            else:
+                logger.info("Walking through SharePoint site: %s", item)
+                ms_site_copy = ms_site.get_default_document_library()
             ms_site_copy = ms_site_copy.get_item_by_path(f"{cur_folder}/{item}")
             if not ms_site_copy:
                 logger.info("Creating new folder: %s", item)
-                ms_site_copy = ms_site.get_default_document_library()
+                if type == 'onedrive':
+                    logger.info("Walking through OneDrive: %s", item)
+                    ms_site_copy = ms_site.get_default_drive()
+                else:
+                    logger.info("Walking through SharePoint site: %s", item)
+                    ms_site_copy = ms_site.get_default_document_library()
                 ms_site_copy = ms_site_copy.get_item_by_path(cur_folder)
                 ms_site_copy = ms_site_copy.create_child_folder(item)
             cur_folder = f"{cur_folder}/{item}"
