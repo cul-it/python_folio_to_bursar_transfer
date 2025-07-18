@@ -80,6 +80,16 @@ class MicrosoftConnector:
             EnvLoader().get(name=f"{self.__connection_name}_LIST")
         )
     
+    def get_teams_channel(self):
+        """
+        Returns a Teams channel object.
+        """
+        channel_id = EnvLoader().get(name=f"{self.__connection_name}_CHANNEL_ID")
+        team_id = EnvLoader().get(name=f"{self.__connection_name}_TEAM_ID")
+        team = self.__acct.teams()
+        team = team.get_channel(channel_id=channel_id, team_id=team_id)
+        return team
+    
     def get_sharepoint_site(self):
         """
         Returns a SharePoint folder object.

@@ -49,7 +49,7 @@ class Auth360Account: #pylint: disable=too-few-public-methods
         token_backend = FileSystemTokenBackend(
             token_path=token_location, token_filename='my_token.txt')
         account = Account(credentials, token_backend=token_backend)
-        if account.authenticate(scopes=['basic', 'message_all']):
+        if account.authenticate(scopes=['basic', 'message_all', 'onedrive_all', 'sharepoint_all', ]):
             print('Authenticated!')
 
         print("----------------------------------------\n"
