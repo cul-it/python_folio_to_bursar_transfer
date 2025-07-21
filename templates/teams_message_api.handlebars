@@ -1,0 +1,35 @@
+{
+	"body": [
+			{
+				"type": "TextBlock",
+				"text": "🚦 Status: Process completed without error",
+				"wrap": true,
+				"weight": "Bolder",
+				"size": "Medium",
+				"color": "Good"
+			},
+			{
+				"type": "TextBlock",
+				"text": "📅 Date: {{format_date 'NOW' '%a %B %d, %I:%M %p'}}",
+				"wrap": true,
+				"size":"Small"
+			},
+			{
+				"type": "TextBlock",
+				"text": "💬 Summary:",
+				"wrap": true,
+				"weight": "Bolder",
+				"size": "Medium"
+			},
+			{
+				"type": "TextBlock",
+				"text": "Charges processed: {{charge.summary.charge_record_count}} fines for {{charge.summary.charge_unique_users}} users",
+				"wrap": true
+			},
+			{
+				"type": "TextBlock",
+				"text": "Credits processed: {{credit.summary.credit_record_count}} credits for {{credit.summary.credit_unique_users}} users",
+				"wrap": true
+			}
+		]
+}
