@@ -132,7 +132,7 @@ class BuildCredits:
 
         self.__filter_data.update(
             self.__data_processor.gen_data_summary(
-                credit_data, 'charge'))
+                credit_data, 'credit'))
         self.__filter_data.update(
             self.__data_processor.gen_data_summary(
                 error_data, 'errors'))

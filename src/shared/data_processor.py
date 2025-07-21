@@ -305,6 +305,7 @@ class DataProcessor:
         remaining = 0
         record_count = 0
         owner_stats = {}
+        users = []
         for f in fine:
             total += float(f['amount'])
             remaining += float(f['remaining']) if 'remaining' in f else 0
@@ -321,12 +322,15 @@ class DataProcessor:
             owner_stats[f['owner_data']['FeeFineOwner']
                         ]['remaining'] += float(f['remaining']) if 'remaining' in f else 0
             owner_stats[f['owner_data']['FeeFineOwner']]['record_count'] += 1
+            users.append(f['userId'])
         logger.info("Data summary generated.")
+        users = list(set(users))  # Unique users
         return {
             f'{name}_total': total,
             f'{name}_remaining': remaining,
             f'{name}_record_count': record_count,
-            f'{name}_owner_stats': owner_stats
+            f'{name}_owner_stats': owner_stats,
+            f'{name}_unique_users': len(users)
         }
 
     def __filter_error(self, data, settings):

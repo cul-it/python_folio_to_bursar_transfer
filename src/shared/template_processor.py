@@ -120,6 +120,7 @@ class TemplateProcessor:
                 case _:
                     logger.error("Invalid export type: %s", level)
                     raise ValueError("Invalid export type")
+
             logger.debug(
                 "Processed data for level %s: %s",
                 level,
