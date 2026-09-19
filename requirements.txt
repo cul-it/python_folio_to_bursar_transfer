@@ -1,5 +1,5 @@
 annotated-types==0.7.0
-anyio==4.8.0
+anyio==4.14.2
 astroid==3.3.9
 attrs==25.3.0
 bcrypt==4.3.0
